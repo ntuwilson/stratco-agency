@@ -1,9 +1,6 @@
 /* ==========================================================================
    STRATCO — ZETTAJOULE ARCHITECTURAL DESIGN SYSTEM
-   1. Ultra-light headings (weight 200/250), tight tracking (-0.03em), line-height 1.0
-   2. Almost-square corners (4px / 0.25rem) everywhere — no round pill bubbles
-   3. Button = compact outlined label + square icon tile
-   4. Fluid root scale & generous side margins
+   Flow: Hero -> Work -> Services -> About -> Contact
    ========================================================================== */
 
 :root {
@@ -22,16 +19,16 @@
   --grey-750: #524F4B;
   --grey-950: #1B1B1B;
 
-  --line-light: rgba(27, 27, 27, 0.14);
-  --line-dark: rgba(255, 255, 255, 0.16);
+  --line-light: rgba(27, 27, 27, 0.12);
+  --line-dark: rgba(255, 255, 255, 0.14);
 
   --font-display: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-brand: 'Montserrat', 'Geist', sans-serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
   --container: 72rem;
-  --side-pad: clamp(3.25rem, 9vw, 8.5rem);
-  --radius: 0.25rem; /* 4px almost-square corners everywhere (ZettaJoule Rule #4) */
+  --side-pad: clamp(3rem, 8.5vw, 8rem);
+  --radius: 0.25rem;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -41,7 +38,6 @@
   padding: 0;
 }
 
-/* Fluid scaling calibrated so split-screen and high-DPI laptops stay refined and delicate */
 html {
   font-size: clamp(13px, 0.95vw, 15px);
   scroll-behavior: smooth;
@@ -52,7 +48,7 @@ html {
 body {
   font-family: var(--font-body);
   font-size: 0.9375rem;
-  line-height: 1.35;
+  line-height: 1.38;
   letter-spacing: -0.01em;
   color: var(--grey-750);
   background-color: var(--bg-white);
@@ -85,14 +81,14 @@ ul, ol {
 }
 
 /* ==========================================================================
-   TYPOGRAPHY (ZettaJoule Section 3: Weight 200, Line-Height 1.0, -3% Tracking)
+   TYPOGRAPHY
    ========================================================================== */
 
 .display-1 {
   font-family: var(--font-display);
-  font-size: clamp(2.15rem, 4.2vw, 3.85rem);
+  font-size: clamp(2.1rem, 4.2vw, 3.85rem);
   font-weight: 200;
-  line-height: 1.0;
+  line-height: 1.02;
   letter-spacing: -0.03em;
   text-wrap: balance;
 }
@@ -101,7 +97,7 @@ ul, ol {
   font-family: var(--font-display);
   font-size: clamp(1.75rem, 3.1vw, 2.85rem);
   font-weight: 200;
-  line-height: 1.0;
+  line-height: 1.02;
   letter-spacing: -0.03em;
   text-wrap: balance;
 }
@@ -110,7 +106,7 @@ ul, ol {
   font-family: var(--font-display);
   font-size: clamp(1.4rem, 2.2vw, 2.1rem);
   font-weight: 200;
-  line-height: 1.05;
+  line-height: 1.08;
   letter-spacing: -0.03em;
   text-wrap: balance;
 }
@@ -119,7 +115,7 @@ ul, ol {
   font-family: var(--font-display);
   font-size: clamp(1.15rem, 1.5vw, 1.45rem);
   font-weight: 200;
-  line-height: 1.15;
+  line-height: 1.18;
   letter-spacing: -0.025em;
   text-wrap: balance;
 }
@@ -128,31 +124,30 @@ ul, ol {
   font-family: var(--font-display);
   font-size: 1.05rem;
   font-weight: 300;
-  line-height: 1.2;
+  line-height: 1.24;
   letter-spacing: -0.02em;
 }
 
 .body-lg {
   font-size: 0.95rem;
-  line-height: 1.38;
+  line-height: 1.42;
   letter-spacing: -0.01em;
   text-wrap: pretty;
 }
 
 .body-md {
   font-size: 0.875rem;
-  line-height: 1.38;
+  line-height: 1.42;
   letter-spacing: -0.01em;
   text-wrap: pretty;
 }
 
 .body-sm {
   font-size: 0.8125rem;
-  line-height: 1.35;
+  line-height: 1.38;
   letter-spacing: -0.01em;
 }
 
-/* Sentence-case small label in Inter 12.5px weight 500 */
 .eyebrow {
   font-family: var(--font-body);
   font-size: 0.78rem;
@@ -167,7 +162,7 @@ ul, ol {
 }
 
 /* ==========================================================================
-   CONTAINERS & GRID (Generous side margins)
+   CONTAINERS, MARGINS & RESPONSIVE BREAKPOINTS
    ========================================================================== */
 
 .container,
@@ -180,9 +175,15 @@ ul, ol {
   padding-right: var(--side-pad);
 }
 
+@media (max-width: 991px) {
+  :root {
+    --side-pad: clamp(2rem, 5vw, 3.75rem);
+  }
+}
+
 @media (max-width: 640px) {
   :root {
-    --side-pad: 2.25rem;
+    --side-pad: 1.5rem;
   }
 }
 
@@ -198,15 +199,23 @@ ul, ol {
 }
 
 .section-pad-lg {
-  padding-top: 9.5rem;
-  padding-bottom: 9.5rem;
+  padding-top: 9rem;
+  padding-bottom: 9rem;
 }
 
 @media (max-width: 991px) {
   .section-pad,
   .section-pad-lg {
-    padding-top: 5.5rem;
-    padding-bottom: 5.5rem;
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .section-pad,
+  .section-pad-lg {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
   }
 }
 
@@ -253,7 +262,7 @@ ul, ol {
 }
 
 /* ==========================================================================
-   NAVBAR
+   NAVBAR & MOBILE DRAWER
    ========================================================================== */
 .navbar {
   position: fixed;
@@ -264,7 +273,7 @@ ul, ol {
   padding: 1.15rem 0;
   transition: background-color 0.3s var(--ease), padding 0.3s var(--ease), border-color 0.3s var(--ease);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background-color: rgba(27, 27, 27, 0.85);
+  background-color: rgba(27, 27, 27, 0.88);
   backdrop-filter: blur(12px);
   color: var(--bg-white);
 }
@@ -280,7 +289,7 @@ ul, ol {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 .navbar .logo-text-fill {
@@ -295,7 +304,7 @@ ul, ol {
 .navbar__links {
   display: flex;
   align-items: center;
-  gap: 1.75rem;
+  gap: 2rem;
 }
 
 .navbar__link {
@@ -310,14 +319,74 @@ ul, ol {
   opacity: 1;
 }
 
-@media (max-width: 860px) {
+.navbar__right {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.navbar__menu-btn {
+  display: none;
+  height: 2.35rem;
+  padding: 0 0.75rem;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  font-size: 0.78rem;
+  font-weight: 400;
+  align-items: center;
+  justify-content: center;
+}
+
+.navbar.is-scrolled .navbar__menu-btn {
+  border-color: var(--grey-250);
+  color: var(--grey-950);
+}
+
+.mobile-drawer {
+  display: none;
+}
+
+@media (max-width: 767px) {
   .navbar__links {
     display: none;
+  }
+  .navbar__menu-btn {
+    display: inline-flex;
+  }
+  .mobile-drawer {
+    display: block;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.35s var(--ease), border-color 0.3s ease;
+    border-top: 1px solid transparent;
+  }
+  .mobile-drawer.is-open {
+    max-height: 18rem;
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
+    border-top-color: rgba(255, 255, 255, 0.12);
+  }
+  .navbar.is-scrolled .mobile-drawer.is-open {
+    border-top-color: var(--line-light);
+  }
+  .mobile-drawer__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding-bottom: 0.5rem;
+  }
+  .mobile-drawer__link {
+    font-size: 0.95rem;
+    font-weight: 400;
+    padding: 0.25rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 }
 
 /* ==========================================================================
-   BUTTON = LABEL + SQUARE ICON TILE (ZettaJoule Section 7: 4px radius, 1px border)
+   BUTTON = LABEL + SQUARE ICON TILE (ZettaJoule Section 7: 4px radius)
    ========================================================================== */
 .btn-zj {
   display: inline-flex;
@@ -373,7 +442,6 @@ ul, ol {
   transform: translate(1.5px, -1.5px);
 }
 
-/* Scrolled Navbar / Light Surface Button */
 .navbar.is-scrolled .btn-zj,
 .btn-zj--light {
   border-color: var(--grey-250);
@@ -416,7 +484,7 @@ ul, ol {
    01. HERO
    ========================================================================== */
 .hero {
-  min-height: 86dvh;
+  min-height: 84dvh;
   padding-top: 8rem;
   padding-bottom: 5rem;
   display: flex;
@@ -457,90 +525,24 @@ ul, ol {
 }
 
 @media (max-width: 767px) {
+  .hero {
+    min-height: 76dvh;
+    padding-top: 7rem;
+    padding-bottom: 4rem;
+  }
   .hero__headline,
   .hero__sub {
     grid-column: 1 / 13;
   }
-}
-
-/* ==========================================================================
-   02. WHO WE ARE
-   ========================================================================== */
-.intro-split {
-  margin-bottom: 4.5rem;
-  align-items: start;
-}
-
-.intro-split__label {
-  grid-column: 1 / 3;
-}
-
-.intro-split__title {
-  grid-column: 3 / 8;
-}
-
-.intro-split__body {
-  grid-column: 9 / 13;
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
-}
-
-.principles-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.25rem;
-}
-
-.principle-card {
-  background-color: var(--bg-stone);
-  border-radius: var(--radius);
-  padding: 1.75rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 21rem;
-  position: relative;
-  overflow: hidden;
-}
-
-.principle-card--tinted {
-  background-color: #E6E5E0;
-}
-
-.principle-card__photo {
-  margin-top: 1.5rem;
-  height: 10.5rem;
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-
-.principle-card__photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: grayscale(100%);
-  transition: transform 0.8s var(--ease), filter 0.5s ease;
-}
-
-.principle-card:hover .principle-card__photo img {
-  transform: scale(1.04);
-  filter: grayscale(0%);
-}
-
-@media (max-width: 991px) {
-  .intro-split__label,
-  .intro-split__title,
-  .intro-split__body {
-    grid-column: 1 / 13;
-  }
-  .principles-grid {
-    grid-template-columns: 1fr;
+  .hero__watermark {
+    width: 18rem;
+    height: 18rem;
+    right: -2rem;
   }
 }
 
 /* ==========================================================================
-   03 & 04. SERVICES: "Identity." & "Presence."
+   02. SELECTED WORK (Light surface right below Hero)
    ========================================================================== */
 .chapter-head {
   margin-bottom: 3.5rem;
@@ -555,6 +557,73 @@ ul, ol {
   grid-column: 8 / 13;
 }
 
+.work-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  margin-top: 2.5rem;
+}
+
+.work-card {
+  display: grid;
+  grid-template-columns: 4fr 5fr;
+  background-color: var(--bg-stone);
+  border: 1px solid var(--line-light);
+  border-radius: var(--radius);
+  overflow: hidden;
+  min-height: 17.5rem;
+  transition: border-color 0.25s ease;
+}
+
+.work-card:hover {
+  border-color: rgba(27, 27, 27, 0.35);
+}
+
+.work-card__img {
+  overflow: hidden;
+  background-color: #E5E5E5;
+}
+
+.work-card__img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 1s var(--ease);
+}
+
+.work-card:hover .work-card__img img {
+  transform: scale(1.04);
+}
+
+.work-card__body {
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+@media (max-width: 1024px) {
+  .work-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .work-card {
+    grid-template-columns: 1fr;
+  }
+  .work-card__img {
+    height: 13.5rem;
+  }
+  .work-card__body {
+    padding: 1.35rem;
+  }
+}
+
+/* ==========================================================================
+   03 & 04. SERVICES: "Identity." & "Presence."
+   ========================================================================== */
 .service-columns {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -620,6 +689,7 @@ ul, ol {
   }
   .service-col:nth-child(2) {
     border-right: none;
+    padding-right: 0;
   }
   .service-col:nth-child(3) {
     padding-left: 0;
@@ -631,6 +701,12 @@ ul, ol {
   .feature-photo-frame {
     grid-template-columns: 1fr;
   }
+  .feature-photo-frame__img {
+    height: 15rem;
+  }
+  .feature-photo-frame__copy {
+    padding: 1.5rem;
+  }
 }
 
 @media (max-width: 600px) {
@@ -641,77 +717,79 @@ ul, ol {
   .service-col:not(:first-child) {
     padding: 1.35rem 0;
     border-right: none;
+    border-top: none;
     border-bottom: 1px solid var(--line-light);
+  }
+  .service-col:last-child {
+    border-bottom: none;
   }
 }
 
 /* ==========================================================================
-   05. SELECTED WORK
+   05. ABOUT (Who We Are + 3 Principles + Sectors)
    ========================================================================== */
-.work-list {
+.intro-split {
+  margin-bottom: 4rem;
+  align-items: start;
+}
+
+.intro-split__label {
+  grid-column: 1 / 3;
+}
+
+.intro-split__title {
+  grid-column: 3 / 8;
+}
+
+.intro-split__body {
+  grid-column: 9 / 13;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.principles-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.25rem;
-  margin-top: 3rem;
 }
 
-.work-card {
-  display: grid;
-  grid-template-columns: 4fr 5fr;
-  background-color: var(--brand-charcoal);
-  border: 1px solid var(--line-dark);
+.principle-card {
+  background-color: var(--bg-stone);
   border-radius: var(--radius);
-  overflow: hidden;
-  min-height: 17.5rem;
-  transition: border-color 0.25s ease;
-}
-
-.work-card:hover {
-  border-color: rgba(255, 255, 255, 0.35);
-}
-
-.work-card__img {
-  overflow: hidden;
-  background-color: #141414;
-}
-
-.work-card__img img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 1s var(--ease);
-}
-
-.work-card:hover .work-card__img img {
-  transform: scale(1.04);
-}
-
-.work-card__body {
   padding: 1.75rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 1rem;
+  min-height: 21rem;
+  position: relative;
+  overflow: hidden;
 }
 
-@media (max-width: 1024px) {
-  .work-list {
-    grid-template-columns: 1fr;
-  }
+.principle-card--tinted {
+  background-color: #E6E5E0;
 }
 
-@media (max-width: 640px) {
-  .work-card {
-    grid-template-columns: 1fr;
-  }
-  .work-card__img {
-    height: 13rem;
-  }
+.principle-card__photo {
+  margin-top: 1.5rem;
+  height: 10.5rem;
+  border-radius: var(--radius);
+  overflow: hidden;
 }
 
-/* ==========================================================================
-   06. SECTORS
-   ========================================================================== */
+.principle-card__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(100%);
+  transition: transform 0.8s var(--ease), filter 0.5s ease;
+}
+
+.principle-card:hover .principle-card__photo img {
+  transform: scale(1.04);
+  filter: grayscale(0%);
+}
+
 .sector-table {
   margin-top: 2.5rem;
   border-top: 1px solid var(--line-light);
@@ -726,15 +804,27 @@ ul, ol {
   align-items: baseline;
 }
 
+@media (max-width: 991px) {
+  .intro-split__label,
+  .intro-split__title,
+  .intro-split__body {
+    grid-column: 1 / 13;
+  }
+  .principles-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 767px) {
   .sector-item {
     grid-template-columns: 1fr;
     gap: 0.35rem;
+    padding: 1.25rem 0;
   }
 }
 
 /* ==========================================================================
-   07. CONTACT & FOOTER
+   06. CONTACT & FOOTER
    ========================================================================== */
 .contact-layout {
   margin-top: 3rem;
@@ -799,7 +889,7 @@ ul, ol {
   padding: 0.65rem 0;
   border-bottom: 1px solid var(--line-dark);
   color: var(--bg-white);
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   border-radius: 0;
   transition: border-color 0.25s ease;
 }
@@ -828,6 +918,9 @@ ul, ol {
   .contact-form-wrap {
     grid-column: 1 / 13;
   }
+  .contact-form-wrap {
+    margin-top: 1.5rem;
+  }
   .minimal-form {
     grid-template-columns: 1fr;
   }
@@ -842,7 +935,7 @@ ul, ol {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  padding: 1.25rem;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s ease;
@@ -856,9 +949,11 @@ ul, ol {
 .modal-card {
   width: 100%;
   max-width: 40rem;
+  max-height: 88dvh;
+  overflow-y: auto;
   background-color: var(--brand-charcoal);
   border: 1px solid var(--line-dark);
   border-radius: var(--radius);
-  padding: 2rem;
+  padding: 1.75rem;
   color: var(--grey-250);
 }

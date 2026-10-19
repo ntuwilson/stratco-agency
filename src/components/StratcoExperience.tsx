@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { CASE_STUDIES, CaseStudy } from '@/data/stratcoData';
 import {
   StratcoMark,
@@ -11,6 +10,7 @@ import {
 
 export default function StratcoExperience() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeCase, setActiveCase] = useState<CaseStudy | null>(null);
   const [formIntent, setFormIntent] = useState<'branding' | 'events'>('branding');
   const [name, setName] = useState('');
@@ -50,35 +50,79 @@ export default function StratcoExperience() {
   return (
     <>
       {/* ====================================================================
-          NAVBAR
+          NAVBAR (Flow: Work -> Services -> About)
           ==================================================================== */}
       <header className={`navbar ${isScrolled ? 'is-scrolled' : ''}`}>
-        <div className="container navbar__inner">
-          <a href="#top" aria-label="Stratco Home">
-            <StratcoWordmark variant="adaptive-nav" width={112} />
-          </a>
+        <div className="container">
+          <div className="navbar__inner">
+            <a href="#top" aria-label="Stratco Home">
+              <StratcoWordmark variant="adaptive-nav" width={112} />
+            </a>
 
-          <nav className="navbar__links" aria-label="Primary">
-            <a href="#about" className="navbar__link">
-              About
-            </a>
-            <a href="#branding" className="navbar__link">
-              Services
-            </a>
-            <a href="#work" className="navbar__link">
-              Work
-            </a>
-            <Link href="/brand" className="navbar__link">
-              Brand
-            </Link>
+            <nav className="navbar__links" aria-label="Primary">
+              <a href="#work" className="navbar__link">
+                Work
+              </a>
+              <a href="#services" className="navbar__link">
+                Services
+              </a>
+              <a href="#about" className="navbar__link">
+                About
+              </a>
+            </nav>
+
+            <div className="navbar__right">
+              <a href="#contact" className="btn-zj">
+                <span className="btn-zj__label">Contact us</span>
+                <span className="btn-zj__tile">
+                  <ArrowNeIcon />
+                </span>
+              </a>
+
+              <button
+                type="button"
+                className="navbar__menu-btn"
+                onClick={() => setMobileMenuOpen((prev) => !prev)}
+                aria-expanded={mobileMenuOpen}
+                aria-label="Toggle navigation menu"
+              >
+                {mobileMenuOpen ? 'Close' : 'Menu'}
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile Drawer */}
+          <nav
+            className={`mobile-drawer ${mobileMenuOpen ? 'is-open' : ''}`}
+            aria-label="Mobile Navigation"
+          >
+            <div className="mobile-drawer__list">
+              <a
+                href="#work"
+                className="mobile-drawer__link"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span>Work</span>
+                <span>↗</span>
+              </a>
+              <a
+                href="#services"
+                className="mobile-drawer__link"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span>Services</span>
+                <span>↗</span>
+              </a>
+              <a
+                href="#about"
+                className="mobile-drawer__link"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span>About</span>
+                <span>↗</span>
+              </a>
+            </div>
           </nav>
-
-          <a href="#contact" className="btn-zj">
-            <span className="btn-zj__label">Contact us</span>
-            <span className="btn-zj__tile">
-              <ArrowNeIcon />
-            </span>
-          </a>
         </div>
       </header>
 
@@ -123,13 +167,228 @@ export default function StratcoExperience() {
         </section>
 
         {/* ==================================================================
-            02. WHO WE ARE (Brand Manual Page 13 Lower Layout)
+            02. WORK (First section after Hero)
+            ================================================================== */}
+        <section className="section-light section-pad-lg" id="work">
+          <div className="container">
+            <div className="u-grid chapter-head" style={{ marginBottom: '2rem' }}>
+              <div className="chapter-head__left">
+                <h2 className="eyebrow" style={{ marginBottom: '0.6rem' }}>
+                  Selected work
+                </h2>
+                <p className="display-2 ink">Proof in the work.</p>
+              </div>
+              <div className="chapter-head__right">
+                <p className="body-lg">
+                  Recent identity systems, physical rollouts and live event
+                  productions across Uganda and East Africa.
+                </p>
+              </div>
+            </div>
+
+            <div className="work-list">
+              {CASE_STUDIES.map((cs) => (
+                <article
+                  key={cs.id}
+                  className="work-card"
+                  onClick={() => setActiveCase(cs)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className="work-card__img">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={cs.image} alt={cs.title} loading="lazy" />
+                  </div>
+                  <div className="work-card__body">
+                    <div>
+                      <span
+                        className="body-sm"
+                        style={{
+                          color: 'var(--grey-500)',
+                          display: 'block',
+                          marginBottom: '0.45rem',
+                        }}
+                      >
+                        {cs.badge}
+                      </span>
+                      <h3
+                        className="h4 ink"
+                        style={{ marginBottom: '0.6rem' }}
+                      >
+                        {cs.title}
+                      </h3>
+                      <p className="body-sm">{cs.summary}</p>
+                    </div>
+                    <div>
+                      <span className="link-arrow">
+                        <span>Read brief</span>
+                        <span>↗</span>
+                      </span>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ==================================================================
+            03. SERVICES I — CORPORATE BRANDING ("Identity.")
+            ================================================================== */}
+        <section className="section-stone section-pad" id="services">
+          <div className="container">
+            <div className="u-grid chapter-head">
+              <div className="chapter-head__left">
+                <h2 className="eyebrow" style={{ marginBottom: '0.6rem' }}>
+                  Services — Corporate branding
+                </h2>
+                <p className="display-2 ink">Identity.</p>
+              </div>
+              <div className="chapter-head__right">
+                <p className="body-lg">
+                  We design complete visual systems that hold together everywhere
+                  your organization appears, from boardroom stationery to street
+                  signage and commercial fleets.
+                </p>
+              </div>
+            </div>
+
+            <div className="service-columns">
+              <div className="service-col">
+                <h3 className="h4 ink">Brand systems &amp; manuals</h3>
+                <p className="body-sm">
+                  Logo creation, typography, color standards and clear brand
+                  guidelines that keep every department consistent.
+                </p>
+              </div>
+
+              <div className="service-col">
+                <h3 className="h4 ink">Stationery &amp; print</h3>
+                <p className="body-sm">
+                  Business cards, letterheads, presentation folders, annual
+                  reports and commercial documentation.
+                </p>
+              </div>
+
+              <div className="service-col">
+                <h3 className="h4 ink">Signage &amp; environments</h3>
+                <p className="body-sm">
+                  Outdoor monolith totems, 3D building signage, reception walls
+                  and exhibition displays.
+                </p>
+              </div>
+
+              <div className="service-col">
+                <h3 className="h4 ink">Fleet &amp; merchandise</h3>
+                <p className="body-sm">
+                  Commercial vehicle wraps, staff ID systems, corporate apparel
+                  and executive gift kits.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==================================================================
+            04. SERVICES II — EVENTS COVERAGE ("Presence.")
+            ================================================================== */}
+        <section className="section-beige section-pad" id="events">
+          <div className="container">
+            <div className="u-grid chapter-head">
+              <div className="chapter-head__left">
+                <h2 className="eyebrow" style={{ marginBottom: '0.6rem' }}>
+                  Services — Events coverage &amp; production
+                </h2>
+                <p className="display-2 ink">Presence.</p>
+              </div>
+              <div className="chapter-head__right">
+                <p className="body-lg">
+                  Conferences, AGMs and product launches happen once, but the
+                  media captured in that room shapes your reputation all year.
+                </p>
+              </div>
+            </div>
+
+            <div className="service-columns">
+              <div className="service-col">
+                <h3 className="h4 ink">Multi-camera video</h3>
+                <p className="body-sm">
+                  Broadcast-grade 4K capture and livestreaming for conferences,
+                  summits and corporate galas.
+                </p>
+              </div>
+
+              <div className="service-col">
+                <h3 className="h4 ink">Executive photography</h3>
+                <p className="body-sm">
+                  Natural, unobtrusive documentary photography capturing
+                  keynotes, VIP protocol and delegates.
+                </p>
+              </div>
+
+              <div className="service-col">
+                <h3 className="h4 ink">Same-day edits</h3>
+                <p className="body-sm">
+                  On-site editors delivering press selects and highlight films
+                  before your guests leave the venue.
+                </p>
+              </div>
+
+              <div className="service-col">
+                <h3 className="h4 ink">Stage &amp; venue branding</h3>
+                <p className="body-sm">
+                  Custom stage backdrops, podiums, media walls, banners and
+                  delegate kits built by the same team.
+                </p>
+              </div>
+            </div>
+
+            <div className="feature-photo-frame">
+              <div className="feature-photo-frame__img">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1400&q=85"
+                  alt="Corporate conference coverage"
+                  loading="lazy"
+                />
+              </div>
+              <div className="feature-photo-frame__copy">
+                <div>
+                  <span className="eyebrow" style={{ marginBottom: '0.6rem' }}>
+                    One team on the floor
+                  </span>
+                  <h3 className="h3 ink" style={{ marginBottom: '0.85rem' }}>
+                    When the team that designs the stage also directs the
+                    cameras, every frame looks right.
+                  </h3>
+                  <p className="body-sm">
+                    No handoff gaps between designers, fabricators and camera
+                    crews. We manage the stage look and the live broadcast under
+                    one brief.
+                  </p>
+                </div>
+                <div>
+                  <a
+                    href="#contact"
+                    className="link-arrow"
+                    onClick={() => setFormIntent('events')}
+                  >
+                    <span>Book event coverage</span>
+                    <span>↗</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==================================================================
+            05. ABOUT (Who We Are + Principles + Industries)
             ================================================================== */}
         <section className="section-light section-pad-lg" id="about">
           <div className="container">
             <div className="u-grid intro-split">
               <div className="intro-split__label">
-                <h2 className="eyebrow">Who we are</h2>
+                <h2 className="eyebrow">About</h2>
               </div>
 
               <div className="intro-split__title">
@@ -230,153 +489,48 @@ export default function StratcoExperience() {
                 </div>
               </article>
             </div>
-          </div>
-        </section>
 
-        {/* ==================================================================
-            03. CORPORATE BRANDING ("Identity.")
-            ================================================================== */}
-        <section className="section-stone section-pad" id="branding">
-          <div className="container">
-            <div className="u-grid chapter-head">
-              <div className="chapter-head__left">
-                <h2 className="eyebrow" style={{ marginBottom: '0.6rem' }}>
-                  Corporate branding
-                </h2>
-                <p className="display-2 ink">Identity.</p>
-              </div>
-              <div className="chapter-head__right">
-                <p className="body-lg">
-                  We design complete visual systems that hold together everywhere
-                  your organization appears, from boardroom stationery to street
-                  signage and commercial fleets.
-                </p>
-              </div>
-            </div>
-
-            <div className="service-columns">
-              <div className="service-col">
-                <h3 className="h4 ink">Brand systems &amp; manuals</h3>
-                <p className="body-sm">
-                  Logo creation, typography, color standards and clear brand
-                  guidelines that keep every department consistent.
-                </p>
-              </div>
-
-              <div className="service-col">
-                <h3 className="h4 ink">Stationery &amp; print</h3>
-                <p className="body-sm">
-                  Business cards, letterheads, presentation folders, annual
-                  reports and commercial documentation.
-                </p>
-              </div>
-
-              <div className="service-col">
-                <h3 className="h4 ink">Signage &amp; environments</h3>
-                <p className="body-sm">
-                  Outdoor monolith totems, 3D building signage, reception walls
-                  and exhibition displays.
-                </p>
-              </div>
-
-              <div className="service-col">
-                <h3 className="h4 ink">Fleet &amp; merchandise</h3>
-                <p className="body-sm">
-                  Commercial vehicle wraps, staff ID systems, corporate apparel
-                  and executive gift kits.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ==================================================================
-            04. EVENTS COVERAGE ("Presence.")
-            ================================================================== */}
-        <section className="section-beige section-pad" id="events">
-          <div className="container">
-            <div className="u-grid chapter-head">
-              <div className="chapter-head__left">
-                <h2 className="eyebrow" style={{ marginBottom: '0.6rem' }}>
-                  Events coverage &amp; production
-                </h2>
-                <p className="display-2 ink">Presence.</p>
-              </div>
-              <div className="chapter-head__right">
-                <p className="body-lg">
-                  Conferences, AGMs and product launches happen once, but the
-                  media captured in that room shapes your reputation all year.
-                </p>
-              </div>
-            </div>
-
-            <div className="service-columns">
-              <div className="service-col">
-                <h3 className="h4 ink">Multi-camera video</h3>
-                <p className="body-sm">
-                  Broadcast-grade 4K capture and livestreaming for conferences,
-                  summits and corporate galas.
-                </p>
-              </div>
-
-              <div className="service-col">
-                <h3 className="h4 ink">Executive photography</h3>
-                <p className="body-sm">
-                  Natural, unobtrusive documentary photography capturing
-                  keynotes, VIP protocol and delegates.
-                </p>
-              </div>
-
-              <div className="service-col">
-                <h3 className="h4 ink">Same-day edits</h3>
-                <p className="body-sm">
-                  On-site editors delivering press selects and highlight films
-                  before your guests leave the venue.
-                </p>
-              </div>
-
-              <div className="service-col">
-                <h3 className="h4 ink">Stage &amp; venue branding</h3>
-                <p className="body-sm">
-                  Custom stage backdrops, podiums, media walls, banners and
-                  delegate kits built by the same team.
-                </p>
-              </div>
-            </div>
-
-            <div className="feature-photo-frame">
-              <div className="feature-photo-frame__img">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1400&q=85"
-                  alt="Corporate conference coverage"
-                  loading="lazy"
-                />
-              </div>
-              <div className="feature-photo-frame__copy">
-                <div>
-                  <span className="eyebrow" style={{ marginBottom: '0.6rem' }}>
-                    One team on the floor
-                  </span>
-                  <h3 className="h3 ink" style={{ marginBottom: '0.85rem' }}>
-                    When the team that designs the stage also directs the
-                    cameras, every frame looks right.
+            {/* Sectors sub-section inside About */}
+            <div style={{ marginTop: '6rem' }}>
+              <div className="u-grid">
+                <div style={{ gridColumn: '1 / 8' }}>
+                  <h3 className="eyebrow" style={{ marginBottom: '0.6rem' }}>
+                    Industries
                   </h3>
-                  <p className="body-sm">
-                    No handoff gaps between designers, fabricators and camera
-                    crews. We manage the stage look and the live broadcast under
-                    one brief.
+                  <p className="h2 ink">Who we work with.</p>
+                </div>
+              </div>
+
+              <div className="sector-table">
+                <div className="sector-item">
+                  <h4 className="h3 ink">Financial services &amp; banking</h4>
+                  <p className="body-md">
+                    Corporate rebrands, branch signage systems, annual reports
+                    and AGM coverage.
                   </p>
                 </div>
-                <div>
-                  <a
-                    href="#contact"
-                    className="link-arrow"
-                    onClick={() => setFormIntent('events')}
-                  >
-                    <span>Book event coverage</span>
-                    <span>↗</span>
-                  </a>
+                <div className="sector-item">
+                  <h4 className="h3 ink">
+                    Mobility, energy &amp; infrastructure
+                  </h4>
+                  <p className="body-md">
+                    Commercial fleet livery, site totems, launch films and
+                    stakeholder documentaries.
+                  </p>
+                </div>
+                <div className="sector-item">
+                  <h4 className="h3 ink">Government &amp; institutions</h4>
+                  <p className="body-md">
+                    Summit stage branding, multi-day conference coverage and
+                    public-facing communications.
+                  </p>
+                </div>
+                <div className="sector-item">
+                  <h4 className="h3 ink">Telecom &amp; enterprise</h4>
+                  <p className="body-md">
+                    Product launches, executive portraiture, corporate
+                    stationery and merchandise.
+                  </p>
                 </div>
               </div>
             </div>
@@ -384,121 +538,7 @@ export default function StratcoExperience() {
         </section>
 
         {/* ==================================================================
-            05. SELECTED WORK
-            ================================================================== */}
-        <section className="section-dark section-pad" id="work">
-          <div className="container">
-            <div className="u-grid chapter-head" style={{ marginBottom: '1.5rem' }}>
-              <div className="chapter-head__left">
-                <h2 className="eyebrow" style={{ marginBottom: '0.6rem' }}>
-                  Selected work
-                </h2>
-                <p className="display-2">Proof in the work.</p>
-              </div>
-              <div className="chapter-head__right">
-                <p className="body-lg" style={{ color: 'var(--grey-250)' }}>
-                  Recent identity systems, physical rollouts and live event
-                  productions.
-                </p>
-              </div>
-            </div>
-
-            <div className="work-list">
-              {CASE_STUDIES.map((cs) => (
-                <article
-                  key={cs.id}
-                  className="work-card"
-                  onClick={() => setActiveCase(cs)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <div className="work-card__img">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={cs.image} alt={cs.title} loading="lazy" />
-                  </div>
-                  <div className="work-card__body">
-                    <div>
-                      <span
-                        className="body-sm"
-                        style={{
-                          color: 'var(--grey-350)',
-                          display: 'block',
-                          marginBottom: '0.5rem',
-                        }}
-                      >
-                        {cs.badge}
-                      </span>
-                      <h3
-                        className="h4"
-                        style={{ color: '#FFFFFF', marginBottom: '0.65rem' }}
-                      >
-                        {cs.title}
-                      </h3>
-                      <p className="body-sm" style={{ color: 'var(--grey-250)' }}>
-                        {cs.summary}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="link-arrow">
-                        <span>Read brief</span>
-                        <span>↗</span>
-                      </span>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ==================================================================
-            06. SECTORS
-            ================================================================== */}
-        <section className="section-light section-pad">
-          <div className="container">
-            <div className="u-grid">
-              <div style={{ gridColumn: '1 / 7' }}>
-                <h2 className="eyebrow" style={{ marginBottom: '0.6rem' }}>
-                  Industries
-                </h2>
-                <p className="h2 ink">Who we work with.</p>
-              </div>
-            </div>
-
-            <div className="sector-table">
-              <div className="sector-item">
-                <h3 className="h3 ink">Financial services &amp; banking</h3>
-                <p className="body-md">
-                  Corporate rebrands, branch signage systems, annual reports and
-                  AGM coverage.
-                </p>
-              </div>
-              <div className="sector-item">
-                <h3 className="h3 ink">Mobility, energy &amp; infrastructure</h3>
-                <p className="body-md">
-                  Commercial fleet livery, site totems, launch films and
-                  stakeholder documentaries.
-                </p>
-              </div>
-              <div className="sector-item">
-                <h3 className="h3 ink">Government &amp; institutions</h3>
-                <p className="body-md">
-                  Summit stage branding, multi-day conference coverage and
-                  public-facing communications.
-                </p>
-              </div>
-              <div className="sector-item">
-                <h3 className="h3 ink">Telecom &amp; enterprise</h3>
-                <p className="body-md">
-                  Product launches, executive portraiture, corporate stationery
-                  and merchandise.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ==================================================================
-            07. CONTACT & FOOTER
+            06. CONTACT & FOOTER
             ================================================================== */}
         <section className="section-dark section-pad" id="contact">
           <StratcoMark
@@ -526,10 +566,16 @@ export default function StratcoExperience() {
             <div className="u-grid contact-layout">
               <div className="contact-details">
                 <div>
-                  <p className="body-md" style={{ color: '#FFFFFF', fontWeight: 500 }}>
+                  <p
+                    className="body-md"
+                    style={{ color: '#FFFFFF', fontWeight: 500 }}
+                  >
                     Stratco Limited
                   </p>
-                  <p className="body-sm" style={{ color: 'var(--grey-250)', marginTop: '0.35rem' }}>
+                  <p
+                    className="body-sm"
+                    style={{ color: 'var(--grey-250)', marginTop: '0.35rem' }}
+                  >
                     Kisakye Complex, Office 301, Bugolobi
                     <br />
                     P.O. Box 144568, Kampala, Uganda
@@ -540,7 +586,10 @@ export default function StratcoExperience() {
                   <p className="body-sm" style={{ color: 'var(--grey-350)' }}>
                     Telephone
                   </p>
-                  <p className="body-md" style={{ color: '#FFFFFF', marginTop: '0.2rem' }}>
+                  <p
+                    className="body-md"
+                    style={{ color: '#FFFFFF', marginTop: '0.2rem' }}
+                  >
                     <a href="tel:+256772833500">+256 772 833500</a>
                     <br />
                     <a href="tel:+256772700708">+256 772 700708</a>
@@ -551,7 +600,10 @@ export default function StratcoExperience() {
                   <p className="body-sm" style={{ color: 'var(--grey-350)' }}>
                     Email
                   </p>
-                  <p className="body-md" style={{ color: '#FFFFFF', marginTop: '0.2rem' }}>
+                  <p
+                    className="body-md"
+                    style={{ color: '#FFFFFF', marginTop: '0.2rem' }}
+                  >
                     <a href="mailto:info@stratco.agency">info@stratco.agency</a>
                   </p>
                 </div>
@@ -628,7 +680,9 @@ export default function StratcoExperience() {
                   )}
 
                   <div className="field field--full">
-                    <label htmlFor="notes">Tell us about your project or event</label>
+                    <label htmlFor="notes">
+                      Tell us about your project or event
+                    </label>
                     <textarea
                       id="notes"
                       rows={3}
@@ -637,7 +691,10 @@ export default function StratcoExperience() {
                     />
                   </div>
 
-                  <div className="field field--full" style={{ marginTop: '0.75rem' }}>
+                  <div
+                    className="field field--full"
+                    style={{ marginTop: '0.75rem' }}
+                  >
                     <div>
                       <button type="submit" className="btn-zj">
                         <span className="btn-zj__label">Send inquiry</span>
@@ -651,7 +708,10 @@ export default function StratcoExperience() {
                       <p className="body-sm" style={{ marginTop: '1rem' }}>
                         <a
                           href={mailtoHref}
-                          style={{ color: '#FFFFFF', textDecoration: 'underline' }}
+                          style={{
+                            color: '#FFFFFF',
+                            textDecoration: 'underline',
+                          }}
                         >
                           Open email draft to info@stratco.agency ↗
                         </a>
@@ -663,17 +723,21 @@ export default function StratcoExperience() {
             </div>
 
             <footer className="footer-bar">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}
+              >
                 <StratcoWordmark
                   variant="inverted"
-                  width={105}
+                  width={98}
                   showTagline={false}
                 />
                 <span>© 2026 Stratco Limited</span>
               </div>
 
-              <div style={{ display: 'flex', gap: '1.75rem' }}>
-                <Link href="/brand">Brand guidelines</Link>
+              <div style={{ display: 'flex', gap: '1.5rem' }}>
+                <a href="#work">Work</a>
+                <a href="#services">Services</a>
+                <a href="#about">About</a>
                 <a href="mailto:info@stratco.agency">info@stratco.agency</a>
               </div>
             </footer>
@@ -715,14 +779,20 @@ export default function StratcoExperience() {
               <button
                 type="button"
                 onClick={() => setActiveCase(null)}
-                style={{ color: '#FFFFFF', fontSize: '1.1rem', padding: '0.25rem 0.5rem' }}
+                style={{
+                  color: '#FFFFFF',
+                  fontSize: '1.1rem',
+                  padding: '0.25rem 0.5rem',
+                }}
                 aria-label="Close"
               >
                 ✕
               </button>
             </div>
 
-            <div style={{ marginTop: '1.5rem', display: 'grid', gap: '1rem' }}>
+            <div
+              style={{ marginTop: '1.5rem', display: 'grid', gap: '1rem' }}
+            >
               <p className="body-md">{activeCase.challenge}</p>
               <p className="body-md">{activeCase.solution}</p>
 
@@ -734,7 +804,11 @@ export default function StratcoExperience() {
               >
                 <span
                   className="body-sm"
-                  style={{ color: '#FFFFFF', display: 'block', marginBottom: '0.5rem' }}
+                  style={{
+                    color: '#FFFFFF',
+                    display: 'block',
+                    marginBottom: '0.5rem',
+                  }}
                 >
                   Deliverables
                 </span>
