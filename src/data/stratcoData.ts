@@ -642,9 +642,9 @@ export const PRODUCTION_STEPS: ProductionStep[] = [
   {
     step: '01',
     phase: 'THE THINKING',
-    title: 'Strategy & Market Positioning',
+    title: 'Strategy',
     description:
-      'We audit the landscape, interrogate audience behavior, and define the single commercial or policy proposition—such as “Your Data, Your Right”—that anchors every creative decision.',
+      'We find the one idea worth saying, and who needs to hear it.',
     output: 'Strategic Brief · Positioning Architecture · Campaign Spine',
     deliverables: [
       'Strategic Brief',
@@ -660,9 +660,9 @@ export const PRODUCTION_STEPS: ProductionStep[] = [
   {
     step: '02',
     phase: 'THE BLUEPRINT',
-    title: 'Creative Direction & Screenplay',
+    title: 'Creative Direction',
     description:
-      'Our creative directors translate the strategy into scripts, documentary story arcs, visual identity systems, and 3D stage and LED environmental blueprints.',
+      'Scripts, story arcs, identity and stage design built around that idea.',
     output: 'Commercial Screenplay · Documentary Story Arc · Stage & LED Plot',
     deliverables: [
       'Commercial Screenplay',
@@ -678,9 +678,9 @@ export const PRODUCTION_STEPS: ProductionStep[] = [
   {
     step: '03',
     phase: 'THE PRODUCTION',
-    title: 'Cinema Shoot, Fabrication & Rigging',
+    title: 'Production',
     description:
-      'Full-scale execution: cinema camera and audio crews on location across Uganda, programme branding on the floor, and stage engineers rigging truss towers and LED walls.',
+      'Film crews, fabrication and stage rigging, on location across Uganda.',
     output: 'Principal Photography · Physical Fabrication · Stage Rigging',
     deliverables: [
       'Principal Cinematography',
@@ -696,9 +696,9 @@ export const PRODUCTION_STEPS: ProductionStep[] = [
   {
     step: '04',
     phase: 'THE ROLLOUT',
-    title: 'Broadcast, Launch & Amplification',
+    title: 'Rollout',
     description:
-      'In-house color grading, sound mastering, live multi-camera 4K IMAG switching, real-time session video clips, and synchronized rollout across TV, OOH, and digital.',
+      'Final edit, live broadcast and launch across TV, outdoor and digital.',
     output: 'Broadcast Masters · Live Transmission · 360° Market Rollout',
     deliverables: [
       'Multi-Cam 4K Live IMAG',

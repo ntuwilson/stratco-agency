@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   CASE_STUDIES,
@@ -19,8 +19,13 @@ interface FlatGalleryFrame {
   rawTag: string;
   caption: string;
   projectCode: string;
+  portrait: boolean;
   caseStudy: CaseStudy;
 }
+
+// Gallery canvas: a pannable sheet larger than the viewport, frames scattered on a jittered cell grid
+const CANVAS_COLS = 6;
+const CANVAS_CELL = 380;
 
 function formatShotTitle(tag?: string, fallback?: string): string {
   if (!tag) return fallback || 'Production Frame';
@@ -43,6 +48,29 @@ function getProjectCode(cs: CaseStudy): string {
   return cs.timeline || 'Stratco';
 }
 
+// Deterministic 0–1 noise so the scattered gallery keeps the same layout between renders
+function noise(i: number, k: number): number {
+  const v = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453;
+  return v - Math.floor(v);
+}
+
+function getCanvasPlacement(idx: number, portrait: boolean) {
+  const col = idx % CANVAS_COLS;
+  const row = Math.floor(idx / CANVAS_COLS);
+  const width = portrait
+    ? CANVAS_CELL * (0.44 + noise(idx, 1) * 0.2)
+    : CANVAS_CELL * (0.62 + noise(idx, 1) * 0.32);
+  const height = portrait ? width * 1.3 : width * 0.66;
+  const slackX = CANVAS_CELL - width - 16;
+  const slackY = CANVAS_CELL - height - 16;
+  return {
+    left: col * CANVAS_CELL + 8 + noise(idx, 2) * Math.max(slackX, 0),
+    top: row * CANVAS_CELL + 8 + noise(idx, 3) * Math.max(slackY, 0),
+    width,
+    height,
+  };
+}
+
 export default function WorkShowcase() {
   const [workIndexMode, setWorkIndexMode] =
     useState<KononenkoIndexMode>('grid');
@@ -54,6 +82,15 @@ export default function WorkShowcase() {
 
   // Interactive Gallery Lightbox index (null when closed)
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  // Gallery canvas drag-to-pan
+  const stageRef = useRef<HTMLDivElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const pan = useRef({ x: 0, y: 0, tx: 0, ty: 0, raf: 0 });
+  const drag = useRef({ active: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 });
+  const [isDragging, setIsDragging] = useState(false);
 
   const filteredCases = useMemo(
     () =>
@@ -73,12 +110,17 @@ export default function WorkShowcase() {
           rawTag: frame.tag || `0${items.length + 1}`,
           caption: frame.caption,
           projectCode: code,
+          portrait: frame.aspect === 'portrait',
           caseStudy: cs,
         });
       });
     });
     return items;
   }, [filteredCases]);
+
+  const canvasRows = Math.max(1, Math.ceil(flatFrames.length / CANVAS_COLS));
+  const canvasW = CANVAS_COLS * CANVAS_CELL;
+  const canvasH = canvasRows * CANVAS_CELL;
 
   // Keyboard navigation & scroll lock when Lightbox is open
   useEffect(() => {
@@ -109,6 +151,107 @@ export default function WorkShowcase() {
     };
   }, [lightboxIdx, flatFrames.length]);
 
+  // Scroll reveal for cards and list rows (same motion as the page's .reveal-on-scroll)
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const targets = root.querySelectorAll('.wk-reveal:not(.is-visible)');
+    if (!('IntersectionObserver' in window)) {
+      targets.forEach((el) => el.classList.add('is-visible'));
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -30px 0px' }
+    );
+    targets.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [workIndexMode, filteredCases]);
+
+  // Centre the gallery sheet whenever it opens or its contents change
+  useEffect(() => {
+    if (workIndexMode !== 'gallery') return;
+    const stage = stageRef.current;
+    const sheet = sheetRef.current;
+    if (!stage || !sheet) return;
+    const p = pan.current;
+    p.tx = p.x = Math.min(0, (stage.clientWidth - canvasW) / 2);
+    p.ty = p.y = Math.min(0, (stage.clientHeight - canvasH) / 2);
+    sheet.style.transform = `translate3d(${p.x}px, ${p.y}px, 0)`;
+    return () => cancelAnimationFrame(p.raf);
+  }, [workIndexMode, canvasW, canvasH]);
+
+  const isCanvasActive = () =>
+    typeof window !== 'undefined' &&
+    window.matchMedia('(min-width: 768px)').matches;
+
+  const clampPan = (x: number, y: number) => {
+    const stage = stageRef.current;
+    if (!stage) return { x, y };
+    const minX = Math.min(0, stage.clientWidth - canvasW);
+    const minY = Math.min(0, stage.clientHeight - canvasH);
+    return {
+      x: Math.max(minX, Math.min(0, x)),
+      y: Math.max(minY, Math.min(0, y)),
+    };
+  };
+
+  const animatePan = () => {
+    const p = pan.current;
+    p.x += (p.tx - p.x) * 0.18;
+    p.y += (p.ty - p.y) * 0.18;
+    if (sheetRef.current) {
+      sheetRef.current.style.transform = `translate3d(${p.x}px, ${p.y}px, 0)`;
+    }
+    if (Math.abs(p.tx - p.x) > 0.3 || Math.abs(p.ty - p.y) > 0.3) {
+      p.raf = requestAnimationFrame(animatePan);
+    } else {
+      p.raf = 0;
+    }
+  };
+
+  const handleStagePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    drag.current.moved = false;
+    if (!isCanvasActive() || e.button !== 0) return;
+    drag.current = {
+      active: true,
+      moved: false,
+      sx: e.clientX,
+      sy: e.clientY,
+      ox: pan.current.tx,
+      oy: pan.current.ty,
+    };
+  };
+
+  const handleStagePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d.active) return;
+    const dx = e.clientX - d.sx;
+    const dy = e.clientY - d.sy;
+    if (!d.moved && Math.hypot(dx, dy) > 5) {
+      d.moved = true;
+      setIsDragging(true);
+      e.currentTarget.setPointerCapture(e.pointerId);
+    }
+    if (!d.moved) return;
+    const next = clampPan(d.ox + dx, d.oy + dy);
+    pan.current.tx = next.x;
+    pan.current.ty = next.y;
+    if (!pan.current.raf) pan.current.raf = requestAnimationFrame(animatePan);
+  };
+
+  const handleStagePointerUp = () => {
+    drag.current.active = false;
+    setIsDragging(false);
+  };
+
   const handleCardMouseMove = (
     e: React.MouseEvent<HTMLElement>,
     caseId: string,
@@ -136,41 +279,214 @@ export default function WorkShowcase() {
     lightboxIdx !== null ? flatFrames[lightboxIdx] ?? null : null;
 
   return (
-    <div className="wk-showcase">
-      {/* Header & Interactive Controls */}
-      <div className="wk-bar">
-        <div className="wk-bar__left">
-          <span className="eyebrow" style={{ marginBottom: '0.6rem' }}>
-            SELECTED WORK
+    <div className="wk-showcase" ref={rootRef}>
+      {/* Header: eyebrow + display heading, inline text filters */}
+      <div className="u-grid wk-head">
+        <div className="wk-head__left">
+          <span className="eyebrow" style={{ marginBottom: '0.65rem' }}>
+            OUR WORK
           </span>
+          <h2 className="display-2 wk-head__title">
+            Selected Work
+            <sup className="wk-head__count">
+              {String(filteredCases.length).padStart(2, '0')}
+            </sup>
+          </h2>
+        </div>
 
-          <div className="wk-filters" role="tablist" aria-label="Filter work">
-            {WORK_FILTERS.map((cat) => {
-              const isActive = activeFilter === cat;
-              const count = CASE_STUDIES.filter((cs) =>
-                cs.filterCategories.includes(cat)
-              ).length;
+        <div
+          className="wk-filters wk-head__right"
+          role="tablist"
+          aria-label="Filter work"
+        >
+          {WORK_FILTERS.map((cat) => {
+            const isActive = activeFilter === cat;
+            const count = CASE_STUDIES.filter((cs) =>
+              cs.filterCategories.includes(cat)
+            ).length;
+            return (
+              <button
+                key={cat}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                className={`wk-filter ${isActive ? 'is-active' : ''}`}
+                onClick={() => {
+                  setActiveFilter(cat);
+                  setLightboxIdx(null);
+                }}
+              >
+                <span className="wk-filter__label">{cat}</span>
+                <sup className="wk-filter__count">{count}</sup>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* MODE 1: STAGGERED 15-COLUMN GRID WITH HOVER FRAME SCRUBBER */}
+      {workIndexMode === 'grid' && (
+        <div className="wk-grid">
+          {filteredCases.map((cs, i) => {
+            const frames = cs.gallery.slice(0, 5);
+            const activeFrameIdx = scrubMap[cs.id] ?? 0;
+            const slot = (i % 6) + 1;
+
+            return (
+              <Link
+                key={cs.id}
+                href={`/work/${cs.slug}`}
+                className={`wk-card wk-card--slot-${slot} wk-reveal`}
+                onMouseMove={(e) =>
+                  handleCardMouseMove(e, cs.id, frames.length)
+                }
+                onMouseLeave={() => handleCardMouseLeave(cs.id)}
+              >
+                <div className="wk-card__media">
+                  {frames.map((fr, fIdx) => (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      key={fr.src}
+                      src={fr.src}
+                      alt={fr.caption || cs.title}
+                      loading={i === 0 && fIdx === 0 ? 'eager' : 'lazy'}
+                      className={`wk-card__img ${
+                        fIdx === activeFrameIdx ? 'is-active' : ''
+                      }`}
+                    />
+                  ))}
+
+                  {frames.length > 1 && (
+                    <div className="wk-card__scrub-bar" aria-hidden="true">
+                      {frames.map((_, sIdx) => (
+                        <span
+                          key={sIdx}
+                          className={`wk-card__scrub-seg ${
+                            sIdx === activeFrameIdx ? 'is-active' : ''
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="wk-card__meta">
+                  <div className="wk-card__text">
+                    <h3 className="wk-card__title">{cs.shortName}</h3>
+                    <p className="wk-card__sub">
+                      {cs.client} · {cs.timeline}
+                    </p>
+                  </div>
+                  <div className="wk-card__swap">
+                    <p className="wk-card__metric">
+                      {cs.heroMetric.number} {cs.heroMetric.sup}
+                    </p>
+                    <p className="wk-card__visit">View case ↗</p>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
+      {/* MODE 2: TITLE INDEX WITH THUMBNAIL CONTACT STRIP */}
+      {workIndexMode === 'list' && (
+        <div className="wk-list">
+          {filteredCases.map((cs) => (
+            <Link
+              key={cs.id}
+              href={`/work/${cs.slug}`}
+              className="wk-list-row wk-reveal"
+            >
+              <h3 className="wk-list-row__title">
+                <span>{cs.titleLines[0]}</span>
+                <span>{cs.titleLines[1]}</span>
+              </h3>
+
+              <div className="wk-list-row__thumbs">
+                {cs.gallery.slice(0, 9).map((frame, fIdx) => (
+                  <div key={frame.src} className="wk-list-row__thumb">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={frame.src}
+                      alt={frame.tag || `${cs.shortName} ${fIdx + 1}`}
+                      loading="lazy"
+                    />
+                  </div>
+                ))}
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* MODE 3: SCATTERED DRAG-TO-EXPLORE CANVAS + LIGHTBOX */}
+      {workIndexMode === 'gallery' && (
+        <div
+          ref={stageRef}
+          className={`wk-stage ${isDragging ? 'is-dragging' : ''}`}
+          onPointerDown={handleStagePointerDown}
+          onPointerMove={handleStagePointerMove}
+          onPointerUp={handleStagePointerUp}
+          onPointerCancel={handleStagePointerUp}
+        >
+          <div
+            ref={sheetRef}
+            className="wk-stage__sheet"
+            style={
+              {
+                '--sheet-w': `${canvasW}px`,
+                '--sheet-h': `${canvasH}px`,
+              } as React.CSSProperties
+            }
+          >
+            {flatFrames.map((item, idx) => {
+              const place = getCanvasPlacement(idx, item.portrait);
               return (
                 <button
-                  key={cat}
+                  key={`${item.caseStudy.id}-${idx}`}
                   type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  className={`wk-filter-pill ${isActive ? 'is-active' : ''}`}
+                  className={`wk-stage-item ${
+                    item.portrait ? 'is-portrait' : ''
+                  }`}
+                  style={
+                    {
+                      '--x': `${place.left}px`,
+                      '--y': `${place.top}px`,
+                      '--w': `${place.width}px`,
+                      '--h': `${place.height}px`,
+                    } as React.CSSProperties
+                  }
                   onClick={() => {
-                    setActiveFilter(cat);
-                    setLightboxIdx(null);
+                    if (drag.current.moved) return;
+                    setLightboxIdx(idx);
                   }}
+                  aria-label={`${item.shotTitle} — ${item.projectCode}`}
                 >
-                  <span>{cat}</span>
-                  <span className="wk-filter-pill__count">{count}</span>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={item.src}
+                    alt={item.caption}
+                    loading="lazy"
+                    draggable={false}
+                  />
+                  <span className="wk-stage-item__label">
+                    {item.shotTitle}
+                  </span>
                 </button>
               );
             })}
           </div>
+          <p className="wk-stage__hint" aria-hidden="true">
+            Drag to explore · {String(flatFrames.length).padStart(2, '0')}{' '}
+            frames
+          </p>
         </div>
+      )}
 
-        {/* 3-Mode View Switcher (`Grid` | `List` | `Gallery`) */}
+      {/* Floating view switcher (`Grid` | `List` | `Gallery`) */}
+      <div className="wk-mode-dock">
         <div
           className="wk-mode-switch"
           role="tablist"
@@ -190,10 +506,10 @@ export default function WorkShowcase() {
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <rect width="7" height="4" fill="currentColor" />
-              <rect x="8" width="7" height="4" fill="currentColor" />
-              <rect y="6" width="7" height="4" fill="currentColor" />
-              <rect x="8" y="6" width="7" height="4" fill="currentColor" />
+              <rect width="7" height="3" fill="currentColor" />
+              <rect x="8" y="7" width="7" height="3" fill="currentColor" />
+              <rect y="5" width="7" height="3" fill="currentColor" />
+              <rect x="8" y="2" width="7" height="3" fill="currentColor" />
             </svg>
             <span>Grid</span>
           </button>
@@ -245,171 +561,6 @@ export default function WorkShowcase() {
           </button>
         </div>
       </div>
-
-      {/* MODE 1: CLEAN EDITORIAL GRID WITH INTERACTIVE HOVER FRAME SCRUBBER */}
-      {workIndexMode === 'grid' && (
-        <div
-          className={`wk-grid ${
-            filteredCases.length === 3 ? 'wk-grid--triad' : ''
-          }`}
-        >
-          {filteredCases.map((cs, i) => {
-            const frames = cs.gallery.slice(0, 5);
-            const activeFrameIdx = scrubMap[cs.id] ?? 0;
-            const currentFrame = frames[activeFrameIdx] || frames[0];
-            const isLead = filteredCases.length === 3 && i === 0;
-
-            return (
-              <Link
-                key={cs.id}
-                href={`/work/${cs.slug}`}
-                className={`wk-card ${isLead ? 'wk-card--lead' : ''}`}
-                onMouseMove={(e) =>
-                  handleCardMouseMove(e, cs.id, frames.length)
-                }
-                onMouseLeave={() => handleCardMouseLeave(cs.id)}
-              >
-                <div className="wk-card__media">
-                  {frames.map((fr, fIdx) => (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      key={fr.src}
-                      src={fr.src}
-                      alt={fr.caption || cs.title}
-                      loading={i === 0 && fIdx === 0 ? 'eager' : 'lazy'}
-                      className={`wk-card__img ${
-                        fIdx === activeFrameIdx ? 'is-active' : ''
-                      }`}
-                    />
-                  ))}
-
-                  {/* Subtle Hover HUD: Shot Tag + Open Pill + Scrub Ticks */}
-                  <div className="wk-card__hud">
-                    <span className="wk-card__shot-tag">
-                      {formatShotTitle(currentFrame?.tag, cs.badge)}
-                    </span>
-                    <span className="wk-card__open-pill">
-                      <span>View project</span>
-                      <ArrowNeIcon />
-                    </span>
-                  </div>
-
-                  {frames.length > 1 && (
-                    <div className="wk-card__scrub-bar" aria-hidden="true">
-                      {frames.map((_, sIdx) => (
-                        <span
-                          key={sIdx}
-                          className={`wk-card__scrub-seg ${
-                            sIdx === activeFrameIdx ? 'is-active' : ''
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="wk-card__meta">
-                  <div className="wk-card__meta-left">
-                    <div className="wk-card__title-row">
-                      <span className="wk-card__index">{cs.index}</span>
-                      <h3 className="wk-card__title">{cs.shortName}</h3>
-                    </div>
-                    <p className="wk-card__sub">
-                      {cs.client} · {cs.timeline}
-                    </p>
-                  </div>
-
-                  <div className="wk-card__meta-right">
-                    <div className="kn-ic-swap">
-                      <p className="kn-dlx-metric">
-                        {cs.heroMetric.number} {cs.heroMetric.sup}
-                      </p>
-                      <p className="kn-jts-visit">Case Study ↗</p>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      )}
-
-      {/* MODE 2: CLEAN INTERACTIVE FILMSTRIP LIST */}
-      {workIndexMode === 'list' && (
-        <div className="wk-list">
-          {filteredCases.map((cs) => (
-            <Link
-              key={cs.id}
-              href={`/work/${cs.slug}`}
-              className="wk-list-row"
-            >
-              <div className="wk-list-row__info">
-                <div className="wk-list-row__top">
-                  <span className="wk-list-row__idx">{cs.index}</span>
-                  <span className="wk-list-row__timeline">{cs.timeline}</span>
-                </div>
-                <h3 className="wk-list-row__title">{cs.shortName}</h3>
-                <p className="wk-list-row__sub">
-                  {cs.client} · {cs.heroMetric.number} {cs.heroMetric.sup}
-                </p>
-              </div>
-
-              <div className="wk-list-row__strip">
-                {cs.gallery.slice(0, 6).map((frame, fIdx) => (
-                  <div key={frame.src} className="wk-list-row__thumb">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={frame.src}
-                      alt={frame.tag || `${cs.shortName} ${fIdx + 1}`}
-                      loading="lazy"
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <div className="wk-list-row__cta">
-                <span>Explore</span>
-                <ArrowNeIcon />
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
-
-      {/* MODE 3: CURATED STUDIO CONTACT SHEET + INTERACTIVE LIGHTBOX */}
-      {workIndexMode === 'gallery' && (
-        <div className="wk-gallery">
-          {flatFrames.map((item, idx) => (
-            <button
-              key={`${item.caseStudy.id}-${idx}`}
-              type="button"
-              className="wk-gallery-item"
-              onClick={() => setLightboxIdx(idx)}
-            >
-              <div className="wk-gallery-item__media">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={item.src} alt={item.caption} loading="lazy" />
-
-                <span className="wk-gallery-item__num">
-                  {String(idx + 1).padStart(2, '0')}
-                </span>
-
-                <div className="wk-gallery-item__hover">
-                  <span>Inspect frame</span>
-                  <span aria-hidden="true">⤢</span>
-                </div>
-              </div>
-
-              <div className="wk-gallery-item__bar">
-                <span className="wk-gallery-item__shot">{item.shotTitle}</span>
-                <span className="wk-gallery-item__code">
-                  {item.projectCode}
-                </span>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* INTERACTIVE FULL-SCREEN STUDIO LIGHTBOX */}
       {activeLightboxFrame && lightboxIdx !== null && (
