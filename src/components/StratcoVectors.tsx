@@ -106,13 +106,13 @@ export function StratcoWordmark({
       </text>
       {showTagline && (
         <text
-          x="75"
-          y="61"
+          x="66"
+          y="62"
           fill={colors.sub}
           fontFamily="var(--font-brand), Montserrat, sans-serif"
-          fontSize="9.3"
-          fontWeight="400"
-          letterSpacing="0.2"
+          fontSize="10.8"
+          fontWeight="500"
+          letterSpacing="0.25"
         >
           Making Brands Unforgettable.
         </text>

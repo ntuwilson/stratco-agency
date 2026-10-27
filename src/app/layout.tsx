@@ -3,9 +3,9 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title:
-    'Stratco — Corporate Branding & Executive Events Coverage | Making Brands Unforgettable',
+    'Stratco — Strategic Creative & Commercial Production House | Making Brands Unforgettable',
   description:
-    'Stratco Limited is Kampala’s premier corporate branding and executive events coverage agency. We architect unforgettable brand identities, physical signage, fleet livery, and multi-camera event productions across Africa and beyond.',
+    'Stratco Limited is a Kampala-based strategic creative and full-scale production company. We turn market strategy into integrated campaigns, television commercials (TVCs), brand systems, and live broadcast productions.',
 };
 
 export default function RootLayout({
@@ -23,7 +23,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Geist:wght@200;300;400;500&family=Inter:wght@300;400;500;600&family=Montserrat:wght@300;400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Geist:wght@200;300;400;500;600&family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=Montserrat:wght@300;400;500;600;700&display=swap"
           rel="stylesheet"
         />
       </head>

@@ -1,62 +1,208 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { CASE_STUDIES, CaseStudy } from '@/data/stratcoData';
+import Link from 'next/link';
+import {
+  CASE_STUDIES,
+  INTERACTIVE_SERVICES,
+  PRODUCTION_STEPS,
+  ProjectIntent,
+  SCOPE_OPTIONS,
+  SECTOR_TICKER,
+  WORK_FILTERS,
+  WorkFilterCategory,
+} from '@/data/stratcoData';
 import {
   StratcoMark,
   StratcoWordmark,
   ArrowNeIcon,
 } from '@/components/StratcoVectors';
+import ConcaveBowlHero from '@/components/ConcaveBowlHero';
+
+export type KononenkoIndexMode = 'grid' | 'list' | 'gallery';
 
 export default function StratcoExperience() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeCase, setActiveCase] = useState<CaseStudy | null>(null);
-  const [formIntent, setFormIntent] = useState<'branding' | 'events'>('branding');
+  const [klaTime, setKlaTime] = useState('21:00');
+
+  // Kononenko Work Index State (`grid` | `list` | `gallery`) + Category Filter
+  const [workIndexMode, setWorkIndexMode] =
+    useState<KononenkoIndexMode>('grid');
+  const [activeFilter, setActiveFilter] =
+    useState<WorkFilterCategory>('All Work');
+
+  // Interactive (1)-(4) Services Matrix State
+  const [activeServiceIdx, setActiveServiceIdx] = useState(0);
+
+  // Interactive Process Pipeline State
+  const [activeStepIdx, setActiveStepIdx] = useState(0);
+  const [isProcessPaused, setIsProcessPaused] = useState(false);
+
+  // Contact Brief Builder State
+  const [formIntent, setFormIntent] = useState<ProjectIntent>('live');
+  const [selectedScopes, setSelectedScopes] = useState<string[]>([
+    'Full Conference / Launch Production',
+    'Stage, Set & LED Wall Design',
+  ]);
   const [name, setName] = useState('');
   const [org, setOrg] = useState('');
   const [email, setEmail] = useState('');
-  const [eventDate, setEventDate] = useState('');
+  const [timeline, setTimeline] = useState('');
   const [notes, setNotes] = useState('');
   const [mailtoHref, setMailtoHref] = useState<string | null>(null);
 
+  // Live Kampala Clock
   useEffect(() => {
-    const onScroll = () => setIsScrolled(window.scrollY > 60);
+    const updateClock = () => {
+      try {
+        const formatted = new Intl.DateTimeFormat('en-GB', {
+          timeZone: 'Africa/Kampala',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        }).format(new Date());
+        setKlaTime(formatted);
+      } catch {
+        setKlaTime('21:00');
+      }
+    };
+    updateClock();
+    const timer = setInterval(updateClock, 15000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Scroll listener for navbar + smooth scroll reveal
+  useEffect(() => {
+    const onScroll = () =>
+      setIsScrolled(window.scrollY > Math.max(window.innerHeight * 0.72, 320));
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
-    return () => window.removeEventListener('scroll', onScroll);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -30px 0px' }
+    );
+
+    const els = document.querySelectorAll('.reveal-on-scroll');
+    els.forEach((el) => observer.observe(el));
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      observer.disconnect();
+    };
   }, []);
+
+  const filteredCases = CASE_STUDIES.filter((cs) =>
+    cs.filterCategories.includes(activeFilter)
+  );
+
+  const handleIntentChange = (intent: ProjectIntent) => {
+    setFormIntent(intent);
+    const defaults = SCOPE_OPTIONS[intent].slice(0, 2);
+    setSelectedScopes(defaults);
+  };
+
+  const toggleScopeChip = (chip: string) => {
+    setSelectedScopes((prev) =>
+      prev.includes(chip)
+        ? prev.filter((item) => item !== chip)
+        : [...prev, chip]
+    );
+  };
+
+  const getIntentLabel = (intent: ProjectIntent) => {
+    switch (intent) {
+      case 'tvc':
+        return 'TVCs & Commercial Film';
+      case 'brand':
+        return 'Campaigns & Brand Systems';
+      case 'live':
+        return 'Live & Broadcast Production';
+      case 'strategy':
+        return 'Strategy & Positioning';
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const typeLabel =
-      formIntent === 'events' ? 'Event Coverage Inquiry' : 'Branding Inquiry';
+    const typeLabel = getIntentLabel(formIntent);
     const subject = encodeURIComponent(
-      `${typeLabel}: ${org || name || 'New Project'}`
+      `${typeLabel} Brief: ${org || name || 'New Project'}`
     );
     const body = encodeURIComponent(
       [
+        `Primary Pillar: ${typeLabel}`,
+        `Selected Deliverables: ${
+          selectedScopes.join(', ') || 'General Inquiry'
+        }`,
         `Name: ${name}`,
         `Organization: ${org}`,
         `Email: ${email}`,
-        ...(formIntent === 'events' ? [`Event Date: ${eventDate || 'TBD'}`] : []),
+        ...(timeline ? [`Target Timeline / Launch: ${timeline}`] : []),
         '',
+        'Project Notes:',
         notes,
       ].join('\n')
     );
     setMailtoHref(`mailto:info@stratco.agency?subject=${subject}&body=${body}`);
   };
 
+  // Lock body scroll while full-screen mobile menu is open
+  useEffect(() => {
+    document.body.style.overflow = mobileMenuOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
+
+  // Auto-advance Approach pipeline unless hovered/interacted or reduced-motion
+  useEffect(() => {
+    if (isProcessPaused) return;
+    if (
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      return;
+    }
+    const timer = window.setInterval(() => {
+      setActiveStepIdx((prev) => (prev + 1) % PRODUCTION_STEPS.length);
+    }, 5500);
+    return () => window.clearInterval(timer);
+  }, [isProcessPaused, activeStepIdx]);
+
+  const currentService = INTERACTIVE_SERVICES[activeServiceIdx];
+  const currentStep = PRODUCTION_STEPS[activeStepIdx];
+
   return (
-    <>
+    <div>
       {/* ====================================================================
-          NAVBAR (Flow: Work -> Services -> About)
+          NAVBAR
           ==================================================================== */}
-      <header className={`navbar ${isScrolled ? 'is-scrolled' : ''}`}>
+      <header
+        className={`navbar ${isScrolled ? 'is-scrolled' : ''} ${
+          mobileMenuOpen ? 'is-menu-open' : ''
+        }`}
+      >
         <div className="container">
           <div className="navbar__inner">
-            <a href="#top" aria-label="Stratco Home">
-              <StratcoWordmark variant="adaptive-nav" width={112} />
+            <a
+              href="#top"
+              className="navbar__brand"
+              aria-label="Stratco Home"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <StratcoWordmark
+                variant="adaptive-nav"
+                width={192}
+                className="navbar__logo-svg"
+              />
             </a>
 
             <nav className="navbar__links" aria-label="Primary">
@@ -64,7 +210,10 @@ export default function StratcoExperience() {
                 Work
               </a>
               <a href="#services" className="navbar__link">
-                Services
+                What we do
+              </a>
+              <a href="#process" className="navbar__link">
+                Approach
               </a>
               <a href="#about" className="navbar__link">
                 About
@@ -72,8 +221,14 @@ export default function StratcoExperience() {
             </nav>
 
             <div className="navbar__right">
-              <a href="#contact" className="btn-zj">
-                <span className="btn-zj__label">Contact us</span>
+              <div className="navbar__clock" title="Kampala, Uganda (EAT)">
+                <span className="navbar__clock-dot" />
+                <span className="navbar__clock-city">KLA</span>
+                <span className="navbar__clock-time">{klaTime}</span>
+              </div>
+
+              <a href="#contact" className="btn-zj navbar__cta-desktop">
+                <span className="btn-zj__label">Plan a call</span>
                 <span className="btn-zj__tile">
                   <ArrowNeIcon />
                 </span>
@@ -81,46 +236,91 @@ export default function StratcoExperience() {
 
               <button
                 type="button"
-                className="navbar__menu-btn"
+                className={`navbar__menu-btn ${
+                  mobileMenuOpen ? 'is-active' : ''
+                }`}
                 onClick={() => setMobileMenuOpen((prev) => !prev)}
                 aria-expanded={mobileMenuOpen}
                 aria-label="Toggle navigation menu"
               >
-                {mobileMenuOpen ? 'Close' : 'Menu'}
+                <span className="navbar__menu-label">
+                  {mobileMenuOpen ? 'Close' : 'Menu'}
+                </span>
+                <span className="navbar__burger" aria-hidden="true">
+                  <span />
+                  <span />
+                </span>
               </button>
             </div>
           </div>
 
-          {/* Mobile Drawer */}
           <nav
             className={`mobile-drawer ${mobileMenuOpen ? 'is-open' : ''}`}
             aria-label="Mobile Navigation"
           >
-            <div className="mobile-drawer__list">
-              <a
-                href="#work"
-                className="mobile-drawer__link"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <span>Work</span>
-                <span>↗</span>
-              </a>
-              <a
-                href="#services"
-                className="mobile-drawer__link"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <span>Services</span>
-                <span>↗</span>
-              </a>
-              <a
-                href="#about"
-                className="mobile-drawer__link"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <span>About</span>
-                <span>↗</span>
-              </a>
+            <div className="mobile-drawer__panel">
+              <div className="mobile-drawer__list">
+                <a
+                  href="#work"
+                  className="mobile-drawer__link"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <span className="mobile-drawer__num">01</span>
+                  <span className="mobile-drawer__text">Work</span>
+                  <span className="mobile-drawer__arrow">↗</span>
+                </a>
+                <a
+                  href="#services"
+                  className="mobile-drawer__link"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <span className="mobile-drawer__num">02</span>
+                  <span className="mobile-drawer__text">What we do</span>
+                  <span className="mobile-drawer__arrow">↗</span>
+                </a>
+                <a
+                  href="#process"
+                  className="mobile-drawer__link"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <span className="mobile-drawer__num">03</span>
+                  <span className="mobile-drawer__text">Approach</span>
+                  <span className="mobile-drawer__arrow">↗</span>
+                </a>
+                <a
+                  href="#about"
+                  className="mobile-drawer__link"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <span className="mobile-drawer__num">04</span>
+                  <span className="mobile-drawer__text">About</span>
+                  <span className="mobile-drawer__arrow">↗</span>
+                </a>
+              </div>
+
+              <div className="mobile-drawer__bottom">
+                <a
+                  href="#contact"
+                  className="btn-zj mobile-drawer__cta"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <span className="btn-zj__label">Get your project done</span>
+                  <span className="btn-zj__tile">
+                    <ArrowNeIcon />
+                  </span>
+                </a>
+
+                <div className="mobile-drawer__meta">
+                  <div className="mobile-drawer__clock">
+                    <span className="navbar__clock-dot" />
+                    <span>Kampala · {klaTime} EAT</span>
+                  </div>
+                  <div className="mobile-drawer__contact">
+                    <a href="mailto:info@stratco.agency">info@stratco.agency</a>
+                    <a href="tel:+256772833500">+256 772 833500</a>
+                  </div>
+                </div>
+              </div>
             </div>
           </nav>
         </div>
@@ -128,419 +328,727 @@ export default function StratcoExperience() {
 
       <main id="top">
         {/* ==================================================================
-            01. HERO
+            01. IMMERSIVE CONCAVE OPTICAL BOWL HERO (3D Spherical Bowl)
             ================================================================== */}
-        <section className="hero section-dark">
-          <StratcoMark
-            className="watermark hero__watermark"
-            color="#FFFFFF"
-          />
-
-          <div className="container hero__content">
-            <div className="u-grid">
-              <div className="hero__headline">
-                <h1 className="display-1">
-                  We make brands
-                  <br />
-                  people remember.
-                </h1>
-              </div>
-
-              <div className="hero__sub">
-                <p className="body-lg">
-                  Stratco is a corporate branding and events agency. We plan,
-                  create and capture the work that gets a brand noticed and
-                  keeps it in mind.
-                </p>
-              </div>
-
-              <div className="hero__actions">
-                <a href="#contact" className="btn-zj">
-                  <span className="btn-zj__label">Start a project</span>
-                  <span className="btn-zj__tile">
-                    <ArrowNeIcon />
-                  </span>
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
+        <ConcaveBowlHero />
 
         {/* ==================================================================
-            02. WORK (First section after Hero)
+            02. SELECTED WORK — PURE KONONENKO INDEX
+            (Each Project Opens Its Own Dedicated Page at `/work/[slug]`)
             ================================================================== */}
         <section className="section-light section-pad-lg" id="work">
           <div className="container">
-            <div className="u-grid chapter-head" style={{ marginBottom: '2rem' }}>
-              <div className="chapter-head__left">
-                <h2 className="eyebrow" style={{ marginBottom: '0.6rem' }}>
-                  Selected work
-                </h2>
-                <p className="display-2 ink">Proof in the work.</p>
+            <div className="kn-work-header reveal-on-scroll is-visible">
+              <div className="kn-work-header__left">
+                <span className="eyebrow" style={{ marginBottom: '0.5rem' }}>
+                  SELECTED WORK
+                </span>
+                <div className="kn-clean-filters" role="tablist">
+                  {WORK_FILTERS.map((cat) => {
+                    const isActive = activeFilter === cat;
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        role="tab"
+                        aria-selected={isActive}
+                        className={`kn-clean-filter-btn ${
+                          isActive ? 'is-active' : ''
+                        }`}
+                        onClick={() => setActiveFilter(cat)}
+                      >
+                        {cat}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="chapter-head__right">
-                <p className="body-lg">
-                  Recent identity systems, physical rollouts and live event
-                  productions across Uganda and East Africa.
+
+              {/* Kononenko's 3-Mode View Switcher (`Grid` | `List` | `Gallery`) */}
+              <div
+                className="kn-ouf-switcher"
+                role="tablist"
+                aria-label="Work index view mode"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={workIndexMode === 'grid'}
+                  className={`kn-qgi-btn ${
+                    workIndexMode === 'grid' ? 'is-active' : ''
+                  }`}
+                  onClick={() => setWorkIndexMode('grid')}
+                >
+                  <svg
+                    viewBox="0 0 15 10"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <rect width="7" height="3" fill="currentColor" />
+                    <rect x="8" y="7" width="7" height="3" fill="currentColor" />
+                    <rect y="5" width="7" height="3" fill="currentColor" />
+                    <rect x="8" y="2" width="7" height="3" fill="currentColor" />
+                  </svg>
+                  <span>Grid</span>
+                </button>
+
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={workIndexMode === 'list'}
+                  className={`kn-qgi-btn ${
+                    workIndexMode === 'list' ? 'is-active' : ''
+                  }`}
+                  onClick={() => setWorkIndexMode('list')}
+                >
+                  <svg
+                    viewBox="0 0 15 11"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <rect x="4" width="3" height="3" fill="currentColor" />
+                    <rect x="4" y="4" width="3" height="3" fill="currentColor" />
+                    <rect x="4" y="8" width="3" height="3" fill="currentColor" />
+                    <rect x="8" width="3" height="3" fill="currentColor" />
+                    <rect x="12" width="3" height="3" fill="currentColor" />
+                    <rect
+                      x="12"
+                      y="4"
+                      width="3"
+                      height="3"
+                      fill="currentColor"
+                    />
+                    <rect
+                      x="12"
+                      y="8"
+                      width="3"
+                      height="3"
+                      fill="currentColor"
+                    />
+                    <rect x="8" y="4" width="3" height="3" fill="currentColor" />
+                    <rect x="8" y="8" width="3" height="3" fill="currentColor" />
+                    <rect width="3" height="11" fill="currentColor" />
+                  </svg>
+                  <span>List</span>
+                </button>
+
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={workIndexMode === 'gallery'}
+                  className={`kn-qgi-btn ${
+                    workIndexMode === 'gallery' ? 'is-active' : ''
+                  }`}
+                  onClick={() => setWorkIndexMode('gallery')}
+                >
+                  <svg
+                    viewBox="0 0 16 11"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <rect width="6.15385" height="3" fill="currentColor" />
+                    <rect y="4" width="3.69231" height="3" fill="currentColor" />
+                    <rect y="8" width="6.15385" height="3" fill="currentColor" />
+                    <rect
+                      x="4.92383"
+                      y="4"
+                      width="6.15385"
+                      height="3"
+                      fill="currentColor"
+                    />
+                    <rect
+                      x="7.38477"
+                      y="8"
+                      width="3.69231"
+                      height="3"
+                      fill="currentColor"
+                    />
+                    <rect
+                      x="7.38477"
+                      width="8.61539"
+                      height="3"
+                      fill="currentColor"
+                    />
+                    <rect
+                      x="12.3086"
+                      y="8"
+                      width="3.69231"
+                      height="3"
+                      fill="currentColor"
+                    />
+                    <rect
+                      x="12.3086"
+                      y="4"
+                      width="3.69231"
+                      height="3"
+                      fill="currentColor"
+                    />
+                  </svg>
+                  <span>Gallery</span>
+                </button>
+              </div>
+            </div>
+
+            {/* MODE 1: KONONENKO STAGGERED ARCHITECTURAL GRID */}
+            {workIndexMode === 'grid' && (
+              <div className="kn-frl-grid reveal-on-scroll is-visible">
+                {filteredCases.map((cs, i) => (
+                  <Link
+                    key={cs.id}
+                    href={`/work/${cs.slug}`}
+                    className={`kn-qct-card kn-qct-pos-${(i % 4) + 1}`}
+                  >
+                    <div className="kn-piz-thumb">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={cs.image}
+                        alt={cs.title}
+                        loading={i < 2 ? 'eager' : 'lazy'}
+                      />
+                    </div>
+
+                    <div className="kn-iw-bar">
+                      <h3 className="kn-it-title">{cs.shortName}</h3>
+
+                      <div className="kn-qcm-right">
+                        <div className="kn-ic-swap">
+                          <p className="kn-dlx-metric">
+                            {cs.heroMetric.number} {cs.heroMetric.sup}
+                          </p>
+                          <p className="kn-jts-visit">Visit</p>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {/* MODE 2: KONONENKO HORIZONTAL CONTACT-SHEET LIST */}
+            {workIndexMode === 'list' && (
+              <div className="kn-srj-list reveal-on-scroll is-visible">
+                {filteredCases.map((cs) => (
+                  <Link
+                    key={cs.id}
+                    href={`/work/${cs.slug}`}
+                    className="kn-vjk-row"
+                  >
+                    <div className="kn-pdx-title-col">
+                      <h3 className="kn-zzg-heading">
+                        <span>{cs.titleLines[0]}</span>
+                        <span>{cs.titleLines[1]}</span>
+                      </h3>
+                    </div>
+
+                    <div className="kn-spm-filmstrip">
+                      {cs.gallery.map((frame, fIdx) => (
+                        <div key={fIdx} className="kn-kvl-thumb">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={frame.src}
+                            alt={frame.tag || cs.title}
+                            loading="lazy"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {/* MODE 3: KONONENKO ARCHIVAL GALLERY SHEET */}
+            {workIndexMode === 'gallery' && (
+              <div className="kn-studio-gallery reveal-on-scroll is-visible">
+                {filteredCases.flatMap((cs) =>
+                  cs.gallery.map((frame, fIdx) => (
+                    <Link
+                      key={`${cs.id}-${fIdx}`}
+                      href={`/work/${cs.slug}`}
+                      className="kn-gallery-sheet-item"
+                    >
+                      <div className="kn-gallery-sheet-item__media">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={frame.src}
+                          alt={frame.caption}
+                          loading="lazy"
+                        />
+                      </div>
+                      <div className="kn-gallery-sheet-item__cap">
+                        <strong>{cs.titleLines[0]}</strong>
+                      </div>
+                    </Link>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* ==================================================================
+            03. WHAT WE DO — ARCHITECTURAL DISCIPLINE INDEX & LIVE STAGE
+            ================================================================== */}
+        <section className="section-dark section-pad-lg" id="services">
+          <div className="container">
+            <div className="u-grid sv-header reveal-on-scroll">
+              <div className="sv-header__left">
+                <span className="eyebrow" style={{ marginBottom: '0.65rem' }}>
+                  WHAT WE DO
+                </span>
+                <h2 className="display-2">
+                  Strategy to broadcast, under one roof.
+                </h2>
+              </div>
+
+              <div className="sv-header__right">
+                <p className="body-lg" style={{ color: 'var(--grey-250)' }}>
+                  Most agencies stop at the deck. Most production houses wait
+                  for a script. Stratco leads both.
                 </p>
               </div>
             </div>
 
-            <div className="work-list">
-              {CASE_STUDIES.map((cs) => (
-                <article
-                  key={cs.id}
-                  className="work-card"
-                  onClick={() => setActiveCase(cs)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <div className="work-card__img">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={cs.image} alt={cs.title} loading="lazy" />
-                  </div>
-                  <div className="work-card__body">
-                    <div>
-                      <span
-                        className="body-sm"
-                        style={{
-                          color: 'var(--grey-500)',
-                          display: 'block',
-                          marginBottom: '0.45rem',
-                        }}
-                      >
-                        {cs.badge}
+            <div className="sv-matrix reveal-on-scroll">
+              {/* Left: Clean Zero-Jump Discipline Index */}
+              <div className="sv-list" role="tablist">
+                {INTERACTIVE_SERVICES.map((svc, idx) => {
+                  const isActive = idx === activeServiceIdx;
+                  return (
+                    <button
+                      key={svc.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={isActive}
+                      className={`sv-row ${isActive ? 'is-active' : ''}`}
+                      onMouseEnter={() => setActiveServiceIdx(idx)}
+                      onClick={() => setActiveServiceIdx(idx)}
+                    >
+                      <span className="sv-row__num">{svc.num}</span>
+
+                      <div className="sv-row__body">
+                        <h3 className="sv-row__title">{svc.title}</h3>
+                        <p className="sv-row__sub">{svc.summary}</p>
+                      </div>
+
+                      <span className="sv-row__arrow" aria-hidden="true">
+                        →
                       </span>
-                      <h3
-                        className="h4 ink"
-                        style={{ marginBottom: '0.6rem' }}
-                      >
-                        {cs.title}
-                      </h3>
-                      <p className="body-sm">{cs.summary}</p>
-                    </div>
-                    <div>
-                      <span className="link-arrow">
-                        <span>Read brief</span>
-                        <span>↗</span>
-                      </span>
-                    </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Right: Widescreen Full-Color Production Stage + Structured Specs */}
+              <div className="sv-stage">
+                <div className="sv-stage__media">
+                  {INTERACTIVE_SERVICES.map((svc, idx) => (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      key={svc.id}
+                      src={svc.image}
+                      alt={svc.title}
+                      className={`sv-stage__img ${
+                        idx === activeServiceIdx ? 'is-active' : ''
+                      }`}
+                    />
+                  ))}
+                  <div className="sv-stage__caption-bar">
+                    <span className="sv-stage__caption-num">
+                      {currentService.num}
+                    </span>
+                    <span>{currentService.caption}</span>
                   </div>
-                </article>
+                </div>
+
+                <div className="sv-stage__details">
+                  <p className="sv-stage__desc">{currentService.description}</p>
+
+                  <div className="sv-stage__caps">
+                    {currentService.capabilities.slice(0, 4).map((cap) => (
+                      <div key={cap} className="sv-stage__cap-item">
+                        <span className="sv-stage__cap-dot" />
+                        <span>{cap}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="sv-stage__cta">
+                    <a
+                      href="#contact"
+                      className="btn-zj"
+                      onClick={() => handleIntentChange(currentService.intent)}
+                    >
+                      <span className="btn-zj__label">
+                        Brief {currentService.title}
+                      </span>
+                      <span className="btn-zj__tile">
+                        <ArrowNeIcon />
+                      </span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==================================================================
+            04. CLEAN SECTOR MARQUEE BAND
+            ================================================================== */}
+        <div
+          className="section-stone"
+          style={{ padding: '2.25rem 0', borderBottom: '1px solid var(--line-light)' }}
+        >
+          <div
+            className="ticker-wrap"
+            aria-label="Sectors and institutions we serve"
+          >
+            <div className="ticker-track">
+              {[...SECTOR_TICKER, ...SECTOR_TICKER].map((item, i) => (
+                <span key={`${item}-${i}`} className="ticker-item">
+                  <span className="ticker-dot" />
+                  {item}
+                </span>
               ))}
             </div>
           </div>
-        </section>
+        </div>
 
         {/* ==================================================================
-            03. SERVICES I — CORPORATE BRANDING ("Identity.")
+            05. APPROACH — INTERACTIVE 4-STAGE PRODUCTION PIPELINE
             ================================================================== */}
-        <section className="section-stone section-pad" id="services">
+        <section
+          className="section-light section-pad-lg"
+          id="process"
+          onMouseEnter={() => setIsProcessPaused(true)}
+          onMouseLeave={() => setIsProcessPaused(false)}
+        >
           <div className="container">
-            <div className="u-grid chapter-head">
-              <div className="chapter-head__left">
-                <h2 className="eyebrow" style={{ marginBottom: '0.6rem' }}>
-                  Services — Corporate branding
+            <div className="u-grid ap-header reveal-on-scroll">
+              <div className="ap-header__left">
+                <span className="eyebrow" style={{ marginBottom: '0.6rem' }}>
+                  APPROACH
+                </span>
+                <h2 className="display-2 ink">
+                  From the boardroom to the broadcast.
                 </h2>
-                <p className="display-2 ink">Identity.</p>
-              </div>
-              <div className="chapter-head__right">
-                <p className="body-lg">
-                  We design complete visual systems that hold together everywhere
-                  your organization appears, from boardroom stationery to street
-                  signage and commercial fleets.
-                </p>
-              </div>
-            </div>
-
-            <div className="service-columns">
-              <div className="service-col">
-                <h3 className="h4 ink">Brand systems &amp; manuals</h3>
-                <p className="body-sm">
-                  Logo creation, typography, color standards and clear brand
-                  guidelines that keep every department consistent.
-                </p>
               </div>
 
-              <div className="service-col">
-                <h3 className="h4 ink">Stationery &amp; print</h3>
-                <p className="body-sm">
-                  Business cards, letterheads, presentation folders, annual
-                  reports and commercial documentation.
-                </p>
-              </div>
+              <div className="ap-header__right">
+                <div className="ap-controls">
+                  <div className="ap-controls__status">
+                    <span className="ap-controls__count">
+                      {currentStep.step} / 0{PRODUCTION_STEPS.length}
+                    </span>
+                    <span className="ap-controls__phase">
+                      {currentStep.phase}
+                    </span>
+                  </div>
 
-              <div className="service-col">
-                <h3 className="h4 ink">Signage &amp; environments</h3>
-                <p className="body-sm">
-                  Outdoor monolith totems, 3D building signage, reception walls
-                  and exhibition displays.
-                </p>
-              </div>
-
-              <div className="service-col">
-                <h3 className="h4 ink">Fleet &amp; merchandise</h3>
-                <p className="body-sm">
-                  Commercial vehicle wraps, staff ID systems, corporate apparel
-                  and executive gift kits.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ==================================================================
-            04. SERVICES II — EVENTS COVERAGE ("Presence.")
-            ================================================================== */}
-        <section className="section-beige section-pad" id="events">
-          <div className="container">
-            <div className="u-grid chapter-head">
-              <div className="chapter-head__left">
-                <h2 className="eyebrow" style={{ marginBottom: '0.6rem' }}>
-                  Services — Events coverage &amp; production
-                </h2>
-                <p className="display-2 ink">Presence.</p>
-              </div>
-              <div className="chapter-head__right">
-                <p className="body-lg">
-                  Conferences, AGMs and product launches happen once, but the
-                  media captured in that room shapes your reputation all year.
-                </p>
-              </div>
-            </div>
-
-            <div className="service-columns">
-              <div className="service-col">
-                <h3 className="h4 ink">Multi-camera video</h3>
-                <p className="body-sm">
-                  Broadcast-grade 4K capture and livestreaming for conferences,
-                  summits and corporate galas.
-                </p>
-              </div>
-
-              <div className="service-col">
-                <h3 className="h4 ink">Executive photography</h3>
-                <p className="body-sm">
-                  Natural, unobtrusive documentary photography capturing
-                  keynotes, VIP protocol and delegates.
-                </p>
-              </div>
-
-              <div className="service-col">
-                <h3 className="h4 ink">Same-day edits</h3>
-                <p className="body-sm">
-                  On-site editors delivering press selects and highlight films
-                  before your guests leave the venue.
-                </p>
-              </div>
-
-              <div className="service-col">
-                <h3 className="h4 ink">Stage &amp; venue branding</h3>
-                <p className="body-sm">
-                  Custom stage backdrops, podiums, media walls, banners and
-                  delegate kits built by the same team.
-                </p>
-              </div>
-            </div>
-
-            <div className="feature-photo-frame">
-              <div className="feature-photo-frame__img">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1400&q=85"
-                  alt="Corporate conference coverage"
-                  loading="lazy"
-                />
-              </div>
-              <div className="feature-photo-frame__copy">
-                <div>
-                  <span className="eyebrow" style={{ marginBottom: '0.6rem' }}>
-                    One team on the floor
-                  </span>
-                  <h3 className="h3 ink" style={{ marginBottom: '0.85rem' }}>
-                    When the team that designs the stage also directs the
-                    cameras, every frame looks right.
-                  </h3>
-                  <p className="body-sm">
-                    No handoff gaps between designers, fabricators and camera
-                    crews. We manage the stage look and the live broadcast under
-                    one brief.
-                  </p>
+                  <div className="ap-controls__btns">
+                    <button
+                      type="button"
+                      className="ap-nav-btn"
+                      aria-label="Previous stage"
+                      onClick={() =>
+                        setActiveStepIdx(
+                          (prev) =>
+                            (prev - 1 + PRODUCTION_STEPS.length) %
+                            PRODUCTION_STEPS.length
+                        )
+                      }
+                    >
+                      ←
+                    </button>
+                    <button
+                      type="button"
+                      className="ap-nav-btn"
+                      aria-label="Next stage"
+                      onClick={() =>
+                        setActiveStepIdx(
+                          (prev) => (prev + 1) % PRODUCTION_STEPS.length
+                        )
+                      }
+                    >
+                      →
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <a
-                    href="#contact"
-                    className="link-arrow"
-                    onClick={() => setFormIntent('events')}
+              </div>
+            </div>
+
+            {/* Interactive 4-Segment Pipeline Rail */}
+            <div
+              className={`ap-rail reveal-on-scroll ${
+                isProcessPaused ? 'is-paused' : ''
+              }`}
+              role="tablist"
+              aria-label="Production pipeline stages"
+            >
+              {PRODUCTION_STEPS.map((st, idx) => {
+                const isActive = idx === activeStepIdx;
+                const isPast = idx < activeStepIdx;
+                return (
+                  <button
+                    key={st.step}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    className={`ap-rail__seg ${isActive ? 'is-active' : ''} ${
+                      isPast ? 'is-past' : ''
+                    }`}
+                    onClick={() => setActiveStepIdx(idx)}
                   >
-                    <span>Book event coverage</span>
-                    <span>↗</span>
-                  </a>
-                </div>
-              </div>
+                    <span className="ap-rail__label">
+                      <strong>{st.step}</strong>
+                      <span>{st.phase}</span>
+                    </span>
+                    <span className="ap-rail__track">
+                      <span
+                        key={`${st.step}-${isActive ? 'active' : 'idle'}`}
+                        className="ap-rail__fill"
+                      />
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Interactive Horizontal Expanding Accordion Deck */}
+            <div className="ap-deck reveal-on-scroll">
+              {PRODUCTION_STEPS.map((st, idx) => {
+                const isActive = idx === activeStepIdx;
+                return (
+                  <article
+                    key={st.step}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={isActive}
+                    className={`ap-card ${isActive ? 'is-active' : ''}`}
+                    onClick={() => setActiveStepIdx(idx)}
+                    onMouseEnter={() => {
+                      if (
+                        typeof window !== 'undefined' &&
+                        window.matchMedia('(hover: hover) and (min-width: 992px)')
+                          .matches
+                      ) {
+                        setActiveStepIdx(idx);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setActiveStepIdx(idx);
+                      }
+                    }}
+                  >
+                    {/* Collapsed Architectural Strip */}
+                    <div className="ap-card__collapsed">
+                      <div className="ap-card__col-top">
+                        <span className="ap-card__num">{st.step}</span>
+                        <span className="ap-card__plus" aria-hidden="true">
+                          +
+                        </span>
+                      </div>
+
+                      <div className="ap-card__col-mid">
+                        <span className="ap-card__phase">{st.phase}</span>
+                        <h3 className="ap-card__col-title">{st.title}</h3>
+                      </div>
+
+                      <div className="ap-card__mini-media">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={st.image}
+                          alt={st.title}
+                          loading="lazy"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Expanded Full Stage View */}
+                    <div className="ap-card__expanded">
+                      <div className="ap-card__info">
+                        <div className="ap-card__info-top">
+                          <div className="ap-card__badge">
+                            <span className="ap-card__badge-dot" />
+                            <span>
+                              {st.step} · {st.phase}
+                            </span>
+                          </div>
+
+                          <h3 className="ap-card__title">{st.title}</h3>
+                          <p className="ap-card__desc">{st.description}</p>
+                        </div>
+
+                        <div className="ap-card__info-bottom">
+                          <span className="ap-card__deliv-label">
+                            KEY DELIVERABLES
+                          </span>
+                          <div className="ap-card__delivs">
+                            {st.deliverables.map((item) => (
+                              <div key={item} className="ap-card__deliv-chip">
+                                <span className="ap-card__deliv-bullet" />
+                                <span>{item}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="ap-card__footer">
+                            <Link
+                              href={`/work/${st.projectSlug}`}
+                              className="ap-card__link"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <span>See in {st.projectLabel}</span>
+                              <ArrowNeIcon />
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="ap-card__media">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={st.image} alt={st.caption} />
+                        <div className="ap-card__media-cap">
+                          <span>{st.caption}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           </div>
         </section>
 
         {/* ==================================================================
-            05. ABOUT (Who We Are + Principles + Industries)
+            06. ABOUT STRATCO
             ================================================================== */}
-        <section className="section-light section-pad-lg" id="about">
+        <section className="section-beige section-pad-lg" id="about">
           <div className="container">
-            <div className="u-grid intro-split">
+            <div className="u-grid intro-split reveal-on-scroll">
               <div className="intro-split__label">
-                <h2 className="eyebrow">About</h2>
+                <h2 className="eyebrow">ABOUT STRATCO</h2>
               </div>
 
               <div className="intro-split__title">
                 <p className="h2 ink">
-                  An agency built on one idea: a brand only works if people
-                  remember it.
+                  We don’t create adverts. We build brands people remember.
                 </p>
               </div>
 
               <div className="intro-split__body">
                 <p className="body-md">
-                  Most communication is seen once and gone by the next day. We
-                  set a harder test for our work: will someone recall the name,
-                  the feeling and the reason to choose you when it is time to
-                  act?
-                </p>
-                <p className="body-md">
-                  That test shapes every brief we take on, from a new corporate
-                  identity to live coverage of a national summit. Strategy,
-                  design, print production and film sit in one team, so the idea
-                  stays intact from the first meeting to the final placement.
+                  Founded in Kampala, Stratco (Strategy + Company) unites senior
+                  brand strategists, commercial film directors, identity
+                  designers, and live broadcast engineers under one roof—so the
+                  big idea survives intact from strategy deck to final broadcast
+                  master.
                 </p>
               </div>
             </div>
 
-            <div className="principles-grid">
+            <div className="principles-grid reveal-on-scroll">
               <article className="principle-card">
                 <div>
-                  <h3 className="h4 ink" style={{ marginBottom: '0.65rem' }}>
-                    Start with the audience
+                  <span
+                    className="eyebrow"
+                    style={{
+                      color: 'var(--brand-red)',
+                      marginBottom: '0.45rem',
+                    }}
+                  >
+                    01 / STRATEGY
+                  </span>
+                  <h3 className="h4 ink" style={{ marginBottom: '0.5rem' }}>
+                    Strategy before execution
                   </h3>
                   <p className="body-sm">
-                    Before we draw a mark or set up a camera, we find out who
-                    you need to reach and what they already think of you.
+                    Every campaign, screenplay, and stage begins with a clear
+                    commercial objective and audience truth.
                   </p>
                 </div>
                 <div className="principle-card__photo">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&w=800&q=80"
-                    alt="Strategy session"
+                    src="/images/ucc/0R7A8991.jpg"
+                    alt="UCC Data Protection Conference panel"
                     loading="lazy"
                   />
                 </div>
               </article>
 
               <article className="principle-card principle-card--tinted">
-                <StratcoMark
-                  className="watermark"
-                  style={{
-                    right: '-2rem',
-                    top: '1rem',
-                    width: '17rem',
-                    height: '17rem',
-                    opacity: 0.05,
-                  }}
-                  color="#1B1B1B"
-                />
                 <div
                   className="principle-card__photo"
                   style={{ marginTop: 0, marginBottom: '1.75rem' }}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=800&q=80"
-                    alt="Brand design review"
+                    src="/images/ftb/6F1A1300.jpg"
+                    alt="Trust Empowerment Programme plenary session"
                     loading="lazy"
                   />
                 </div>
-                <div style={{ position: 'relative', zIndex: 1 }}>
-                  <h3 className="h4 ink" style={{ marginBottom: '0.65rem' }}>
-                    Be worth remembering
+                <div>
+                  <span
+                    className="eyebrow"
+                    style={{
+                      color: 'var(--brand-red)',
+                      marginBottom: '0.45rem',
+                    }}
+                  >
+                    02 / CRAFT
+                  </span>
+                  <h3 className="h4 ink" style={{ marginBottom: '0.5rem' }}>
+                    Built to be remembered
                   </h3>
                   <p className="body-sm">
-                    Attention is easy to buy and quick to lose. We aim for the
-                    idea people repeat to someone else the next day.
+                    From 50+ district national documentaries with Penda to
+                    flagship summits for UCC and the Ministry of ICT, we execute
+                    at broadcast standard.
                   </p>
                 </div>
               </article>
 
               <article className="principle-card">
                 <div>
-                  <h3 className="h4 ink" style={{ marginBottom: '0.65rem' }}>
-                    Stay accountable
+                  <span
+                    className="eyebrow"
+                    style={{
+                      color: 'var(--brand-red)',
+                      marginBottom: '0.45rem',
+                    }}
+                  >
+                    03 / PRODUCTION
+                  </span>
+                  <h3 className="h4 ink" style={{ marginBottom: '0.5rem' }}>
+                    In-house from brief to screen
                   </h3>
                   <p className="body-sm">
-                    Every project has clear deliverables and timelines agreed up
-                    front, and we report against them in plain numbers.
+                    Senior directors and technical producers run your production
+                    directly—on schedule and on budget.
                   </p>
                 </div>
                 <div className="principle-card__photo">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80"
-                    alt="Production team"
+                    src="/images/ucc/0R7A9084.jpg"
+                    alt="Stratco multi-camera broadcast execution"
                     loading="lazy"
                   />
                 </div>
               </article>
             </div>
-
-            {/* Sectors sub-section inside About */}
-            <div style={{ marginTop: '6rem' }}>
-              <div className="u-grid">
-                <div style={{ gridColumn: '1 / 8' }}>
-                  <h3 className="eyebrow" style={{ marginBottom: '0.6rem' }}>
-                    Industries
-                  </h3>
-                  <p className="h2 ink">Who we work with.</p>
-                </div>
-              </div>
-
-              <div className="sector-table">
-                <div className="sector-item">
-                  <h4 className="h3 ink">Financial services &amp; banking</h4>
-                  <p className="body-md">
-                    Corporate rebrands, branch signage systems, annual reports
-                    and AGM coverage.
-                  </p>
-                </div>
-                <div className="sector-item">
-                  <h4 className="h3 ink">
-                    Mobility, energy &amp; infrastructure
-                  </h4>
-                  <p className="body-md">
-                    Commercial fleet livery, site totems, launch films and
-                    stakeholder documentaries.
-                  </p>
-                </div>
-                <div className="sector-item">
-                  <h4 className="h3 ink">Government &amp; institutions</h4>
-                  <p className="body-md">
-                    Summit stage branding, multi-day conference coverage and
-                    public-facing communications.
-                  </p>
-                </div>
-                <div className="sector-item">
-                  <h4 className="h3 ink">Telecom &amp; enterprise</h4>
-                  <p className="body-md">
-                    Product launches, executive portraiture, corporate
-                    stationery and merchandise.
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
 
         {/* ==================================================================
-            06. CONTACT & FOOTER
+            07. CONTACT & BRIEF BUILDER
             ================================================================== */}
-        <section className="section-dark section-pad" id="contact">
+        <section className="section-dark section-pad-lg" id="contact">
           <StratcoMark
             className="watermark"
             style={{
@@ -553,17 +1061,22 @@ export default function StratcoExperience() {
             color="#FFFFFF"
           />
 
-          <div className="container" style={{ position: 'relative', zIndex: 2 }}>
-            <div className="u-grid">
-              <div style={{ gridColumn: '1 / 10' }}>
-                <h2 className="eyebrow" style={{ marginBottom: '0.6rem' }}>
-                  Contact
+          <div
+            className="container"
+            style={{ position: 'relative', zIndex: 2 }}
+          >
+            <div className="u-grid reveal-on-scroll">
+              <div style={{ gridColumn: '1 / 11' }}>
+                <span className="eyebrow" style={{ marginBottom: '0.6rem' }}>
+                  CONTACT
+                </span>
+                <h2 className="display-2">
+                  Tell us what you need to move.
                 </h2>
-                <p className="display-2">Start a conversation.</p>
               </div>
             </div>
 
-            <div className="u-grid contact-layout">
+            <div className="u-grid contact-layout reveal-on-scroll">
               <div className="contact-details">
                 <div>
                   <p
@@ -584,7 +1097,7 @@ export default function StratcoExperience() {
 
                 <div>
                   <p className="body-sm" style={{ color: 'var(--grey-350)' }}>
-                    Telephone
+                    Direct Line
                   </p>
                   <p
                     className="body-md"
@@ -607,33 +1120,58 @@ export default function StratcoExperience() {
                     <a href="mailto:info@stratco.agency">info@stratco.agency</a>
                   </p>
                 </div>
+
+                <div className="contact-clock-box">
+                  <span className="navbar__clock-dot" />
+                  <span>Kampala: {klaTime} EAT</span>
+                </div>
               </div>
 
               <div className="contact-form-wrap">
                 <div className="intent-tabs" role="tablist">
-                  <button
-                    type="button"
-                    className={`intent-tab ${
-                      formIntent === 'branding' ? 'is-active' : ''
-                    }`}
-                    onClick={() => setFormIntent('branding')}
-                  >
-                    Corporate branding
-                  </button>
-                  <button
-                    type="button"
-                    className={`intent-tab ${
-                      formIntent === 'events' ? 'is-active' : ''
-                    }`}
-                    onClick={() => setFormIntent('events')}
-                  >
-                    Event coverage
-                  </button>
+                  {(
+                    [
+                      ['live', 'Live & Broadcast'],
+                      ['tvc', 'TVCs & Film'],
+                      ['brand', 'Brand & Campaigns'],
+                      ['strategy', 'Strategy'],
+                    ] as [ProjectIntent, string][]
+                  ).map(([key, label]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      className={`intent-tab ${
+                        formIntent === key ? 'is-active' : ''
+                      }`}
+                      onClick={() => handleIntentChange(key)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                <div style={{ marginBottom: '2rem' }}>
+                  <div className="scope-chip-grid">
+                    {SCOPE_OPTIONS[formIntent].map((chip) => {
+                      const active = selectedScopes.includes(chip);
+                      return (
+                        <button
+                          key={chip}
+                          type="button"
+                          className={`scope-chip ${active ? 'is-active' : ''}`}
+                          onClick={() => toggleScopeChip(chip)}
+                        >
+                          <span>{chip}</span>
+                          <span>{active ? '✓' : '+'}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <form className="minimal-form" onSubmit={handleSubmit}>
                   <div className="field">
-                    <label htmlFor="name">Name</label>
+                    <label htmlFor="name">Your Name</label>
                     <input
                       id="name"
                       type="text"
@@ -655,7 +1193,7 @@ export default function StratcoExperience() {
                   </div>
 
                   <div className="field">
-                    <label htmlFor="email">Email</label>
+                    <label htmlFor="email">Work Email</label>
                     <input
                       id="email"
                       type="email"
@@ -665,24 +1203,19 @@ export default function StratcoExperience() {
                     />
                   </div>
 
-                  {formIntent === 'events' ? (
-                    <div className="field">
-                      <label htmlFor="eventDate">Event date</label>
-                      <input
-                        id="eventDate"
-                        type="date"
-                        value={eventDate}
-                        onChange={(e) => setEventDate(e.target.value)}
-                      />
-                    </div>
-                  ) : (
-                    <div className="field" />
-                  )}
+                  <div className="field">
+                    <label htmlFor="timeline">Timeline</label>
+                    <input
+                      id="timeline"
+                      type="text"
+                      placeholder="e.g. Q4 Campaign / Summit"
+                      value={timeline}
+                      onChange={(e) => setTimeline(e.target.value)}
+                    />
+                  </div>
 
                   <div className="field field--full">
-                    <label htmlFor="notes">
-                      Tell us about your project or event
-                    </label>
+                    <label htmlFor="notes">Project Brief</label>
                     <textarea
                       id="notes"
                       rows={3}
@@ -697,7 +1230,9 @@ export default function StratcoExperience() {
                   >
                     <div>
                       <button type="submit" className="btn-zj">
-                        <span className="btn-zj__label">Send inquiry</span>
+                        <span className="btn-zj__label">
+                          Send project brief
+                        </span>
                         <span className="btn-zj__tile">
                           <ArrowNeIcon />
                         </span>
@@ -713,7 +1248,8 @@ export default function StratcoExperience() {
                             textDecoration: 'underline',
                           }}
                         >
-                          Open email draft to info@stratco.agency ↗
+                          Open prepared brief in your email client
+                          (info@stratco.agency) ↗
                         </a>
                       </p>
                     )}
@@ -724,19 +1260,24 @@ export default function StratcoExperience() {
 
             <footer className="footer-bar">
               <div
-                style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1.25rem',
+                }}
               >
                 <StratcoWordmark
                   variant="inverted"
-                  width={98}
+                  width={142}
                   showTagline={false}
                 />
-                <span>© 2026 Stratco Limited</span>
+                <span>© 2026 Stratco Limited · Kampala, Uganda</span>
               </div>
 
               <div style={{ display: 'flex', gap: '1.5rem' }}>
                 <a href="#work">Work</a>
-                <a href="#services">Services</a>
+                <a href="#services">What we do</a>
+                <a href="#process">Approach</a>
                 <a href="#about">About</a>
                 <a href="mailto:info@stratco.agency">info@stratco.agency</a>
               </div>
@@ -744,86 +1285,6 @@ export default function StratcoExperience() {
           </div>
         </section>
       </main>
-
-      {/* ====================================================================
-          MINIMAL CASE STUDY MODAL
-          ==================================================================== */}
-      <div
-        className={`modal-backdrop ${activeCase ? 'is-open' : ''}`}
-        role="dialog"
-        aria-modal="true"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) setActiveCase(null);
-        }}
-      >
-        {activeCase && (
-          <div className="modal-card">
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                gap: '1rem',
-                paddingBottom: '1.25rem',
-                borderBottom: '1px solid var(--line-dark)',
-              }}
-            >
-              <div>
-                <span className="eyebrow" style={{ marginBottom: '0.35rem' }}>
-                  {activeCase.badge}
-                </span>
-                <h3 className="h3" style={{ color: '#FFFFFF' }}>
-                  {activeCase.title}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setActiveCase(null)}
-                style={{
-                  color: '#FFFFFF',
-                  fontSize: '1.1rem',
-                  padding: '0.25rem 0.5rem',
-                }}
-                aria-label="Close"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div
-              style={{ marginTop: '1.5rem', display: 'grid', gap: '1rem' }}
-            >
-              <p className="body-md">{activeCase.challenge}</p>
-              <p className="body-md">{activeCase.solution}</p>
-
-              <div
-                style={{
-                  paddingTop: '1.25rem',
-                  borderTop: '1px solid var(--line-dark)',
-                }}
-              >
-                <span
-                  className="body-sm"
-                  style={{
-                    color: '#FFFFFF',
-                    display: 'block',
-                    marginBottom: '0.5rem',
-                  }}
-                >
-                  Deliverables
-                </span>
-                <ul style={{ display: 'grid', gap: '0.35rem' }}>
-                  {activeCase.deliverables.map((item) => (
-                    <li key={item} className="body-sm">
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </>
+    </div>
   );
 }
