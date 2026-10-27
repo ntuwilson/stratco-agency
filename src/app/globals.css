@@ -2331,7 +2331,7 @@ ul, ol {
   font-size: 1.05rem;
   font-weight: 600;
   letter-spacing: -0.02em;
-  color: var(--ink-900);
+  color: var(--grey-950);
   font-variant-numeric: tabular-nums;
 }
 
@@ -2355,7 +2355,7 @@ ul, ol {
   border-radius: var(--radius);
   border: 1px solid rgba(11, 11, 14, 0.16);
   background-color: var(--bg-white);
-  color: var(--ink-900);
+  color: var(--grey-950);
   font-family: var(--font-display);
   font-size: 1rem;
   display: inline-flex;
@@ -2366,8 +2366,8 @@ ul, ol {
 }
 
 .ap-nav-btn:hover {
-  background-color: var(--ink-900);
-  border-color: var(--ink-900);
+  background-color: var(--grey-950);
+  border-color: var(--grey-950);
   color: #FFFFFF;
 }
 
@@ -2409,7 +2409,7 @@ ul, ol {
   font-family: var(--font-display);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: var(--ink-900);
+  color: var(--grey-950);
 }
 
 .ap-rail__seg.is-active .ap-rail__label,
@@ -2430,7 +2430,7 @@ ul, ol {
   display: block;
   height: 100%;
   width: 0%;
-  background-color: var(--ink-900);
+  background-color: var(--grey-950);
 }
 
 .ap-rail__seg.is-past .ap-rail__fill {
@@ -2538,7 +2538,7 @@ ul, ol {
   font-weight: 600;
   line-height: 1;
   letter-spacing: -0.03em;
-  color: var(--ink-900);
+  color: var(--grey-950);
   font-variant-numeric: tabular-nums;
 }
 
@@ -2553,7 +2553,7 @@ ul, ol {
   font-family: var(--font-display);
   font-size: 1.05rem;
   line-height: 1;
-  color: var(--ink-900);
+  color: var(--grey-950);
   transition: background-color 0.25s ease, color 0.25s ease,
     border-color 0.25s ease, transform 0.25s ease;
 }
@@ -2580,13 +2580,14 @@ ul, ol {
   margin-bottom: 0.4rem;
 }
 
+.section-light .ap-card__col-title,
 .ap-card__col-title {
   font-family: var(--font-display);
   font-size: 1.08rem;
   font-weight: 600;
   line-height: 1.24;
   letter-spacing: -0.015em;
-  color: var(--ink-900);
+  color: var(--grey-950);
 }
 
 .ap-card__mini-media {
@@ -2659,6 +2660,8 @@ ul, ol {
   background-color: var(--brand-red);
 }
 
+.section-light h3.ap-card__title,
+.section-light .ap-card.is-active .ap-card__title,
 .ap-card__title {
   font-family: var(--font-display);
   font-size: clamp(1.42rem, 1.95vw, 1.82rem);
@@ -2853,7 +2856,7 @@ ul, ol {
     justify-content: center;
     font-family: var(--font-display);
     font-size: 1.05rem;
-    color: var(--ink-900);
+    color: var(--grey-950);
     flex-shrink: 0;
   }
 
