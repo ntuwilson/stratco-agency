@@ -19,12 +19,7 @@ import WorkShowcase, { KononenkoIndexMode } from '@/components/WorkShowcase';
 
 export type { KononenkoIndexMode };
 
-const TIMELINE_PRESETS = [
-  'Immediate (< 1 Month)',
-  '1 – 3 Months',
-  'Q3 / Q4 Rollout',
-  'Multi-District / Ongoing',
-];
+const TIMELINE_PRESETS = ['Within a month', '1 – 3 months', 'Later / ongoing'];
 
 export default function StratcoExperience() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -47,7 +42,7 @@ export default function StratcoExperience() {
   const [name, setName] = useState('');
   const [org, setOrg] = useState('');
   const [email, setEmail] = useState('');
-  const [timeline, setTimeline] = useState('1 – 3 Months');
+  const [timeline, setTimeline] = useState('1 – 3 months');
   const [notes, setNotes] = useState('');
   const [mailtoHref, setMailtoHref] = useState<string | null>(null);
   const [preparedBriefText, setPreparedBriefText] = useState('');
@@ -159,7 +154,7 @@ export default function StratcoExperience() {
         selectedScopes.join(', ') || 'General Inquiry'
       }`,
       `Name: ${name}`,
-      `Organization: ${org}`,
+      `Organization: ${org || '—'}`,
       `Email: ${email}`,
       ...(timeline ? [`Target Timeline / Launch: ${timeline}`] : []),
       '',
@@ -513,14 +508,9 @@ export default function StratcoExperience() {
 
               <div className="ap-header__right">
                 <div className="ap-controls">
-                  <div className="ap-controls__status">
-                    <span className="ap-controls__count">
-                      {currentStep.step} / 0{PRODUCTION_STEPS.length}
-                    </span>
-                    <span className="ap-controls__phase">
-                      {currentStep.phase}
-                    </span>
-                  </div>
+                  <span className="ap-controls__count" aria-live="polite">
+                    {currentStep.step} / 0{PRODUCTION_STEPS.length}
+                  </span>
 
                   <div className="ap-controls__btns">
                     <button
@@ -554,54 +544,23 @@ export default function StratcoExperience() {
               </div>
             </div>
 
-            {/* Interactive 4-Segment Pipeline Rail */}
+            {/* Four-step index: hairline columns, the active one opens to text + image.
+                Reveal lives on a static wrapper so the paused class can't wipe `is-visible`. */}
+            <div className="reveal-on-scroll">
             <div
-              className={`ap-rail reveal-on-scroll ${
-                isProcessPaused ? 'is-paused' : ''
-              }`}
+              className={`ap-steps ${isProcessPaused ? 'is-paused' : ''}`}
               role="tablist"
-              aria-label="Production pipeline stages"
+              aria-label="Our process"
             >
-              {PRODUCTION_STEPS.map((st, idx) => {
-                const isActive = idx === activeStepIdx;
-                const isPast = idx < activeStepIdx;
-                return (
-                  <button
-                    key={st.step}
-                    type="button"
-                    role="tab"
-                    aria-selected={isActive}
-                    className={`ap-rail__seg ${isActive ? 'is-active' : ''} ${
-                      isPast ? 'is-past' : ''
-                    }`}
-                    onClick={() => setActiveStepIdx(idx)}
-                  >
-                    <span className="ap-rail__label">
-                      <strong>{st.step}</strong>
-                      <span>{st.phase}</span>
-                    </span>
-                    <span className="ap-rail__track">
-                      <span
-                        key={`${st.step}-${isActive ? 'active' : 'idle'}`}
-                        className="ap-rail__fill"
-                      />
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Interactive Horizontal Expanding Accordion Deck */}
-            <div className="ap-deck reveal-on-scroll">
               {PRODUCTION_STEPS.map((st, idx) => {
                 const isActive = idx === activeStepIdx;
                 return (
                   <article
                     key={st.step}
-                    role="button"
+                    role="tab"
                     tabIndex={0}
-                    aria-expanded={isActive}
-                    className={`ap-card ${isActive ? 'is-active' : ''}`}
+                    aria-selected={isActive}
+                    className={`ap-step ${isActive ? 'is-active' : ''}`}
                     onClick={() => setActiveStepIdx(idx)}
                     onMouseEnter={() => {
                       if (
@@ -619,82 +578,37 @@ export default function StratcoExperience() {
                       }
                     }}
                   >
-                    {/* Collapsed Architectural Strip */}
-                    <div className="ap-card__collapsed">
-                      <div className="ap-card__col-top">
-                        <span className="ap-card__num">{st.step}</span>
-                        <span className="ap-card__plus" aria-hidden="true">
-                          +
-                        </span>
-                      </div>
+                    <span
+                      key={`${st.step}-${isActive ? 'active' : 'idle'}`}
+                      className="ap-step__bar"
+                      aria-hidden="true"
+                    />
 
-                      <div className="ap-card__col-mid">
-                        <span className="ap-card__phase">{st.phase}</span>
-                        <h3 className="ap-card__col-title">{st.title}</h3>
-                      </div>
+                    <div className="ap-step__text">
+                      <span className="ap-step__num">{st.step}</span>
+                      <h3 className="ap-step__title">{st.title}</h3>
 
-                      <div className="ap-card__mini-media">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={st.image}
-                          alt={st.title}
-                          loading="lazy"
-                        />
+                      <div className="ap-step__more">
+                        <p className="ap-step__desc">{st.description}</p>
+                        <Link
+                          href={`/work/${st.projectSlug}`}
+                          className="ap-step__link"
+                          tabIndex={isActive ? 0 : -1}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          View case ↗
+                        </Link>
                       </div>
                     </div>
 
-                    {/* Expanded Full Stage View */}
-                    <div className="ap-card__expanded">
-                      <div className="ap-card__info">
-                        <div className="ap-card__info-top">
-                          <div className="ap-card__badge">
-                            <span className="ap-card__badge-dot" />
-                            <span>
-                              {st.step} · {st.phase}
-                            </span>
-                          </div>
-
-                          <h3 className="ap-card__title">{st.title}</h3>
-                          <p className="ap-card__desc">{st.description}</p>
-                        </div>
-
-                        <div className="ap-card__info-bottom">
-                          <span className="ap-card__deliv-label">
-                            KEY DELIVERABLES
-                          </span>
-                          <div className="ap-card__delivs">
-                            {st.deliverables.map((item) => (
-                              <div key={item} className="ap-card__deliv-chip">
-                                <span className="ap-card__deliv-bullet" />
-                                <span>{item}</span>
-                              </div>
-                            ))}
-                          </div>
-
-                          <div className="ap-card__footer">
-                            <Link
-                              href={`/work/${st.projectSlug}`}
-                              className="ap-card__link"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <span>See in {st.projectLabel}</span>
-                              <ArrowNeIcon />
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="ap-card__media">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={st.image} alt={st.caption} />
-                        <div className="ap-card__media-cap">
-                          <span>{st.caption}</span>
-                        </div>
-                      </div>
+                    <div className="ap-step__media">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={st.image} alt={st.caption} loading="lazy" />
                     </div>
                   </article>
                 );
               })}
+            </div>
             </div>
           </div>
         </section>
@@ -717,106 +631,46 @@ export default function StratcoExperience() {
 
               <div className="intro-split__body">
                 <p className="body-md">
-                  Founded in Kampala, Stratco (Strategy + Company) unites senior
-                  brand strategists, commercial film directors, identity
-                  designers, and live broadcast engineers under one roof—so the
-                  big idea survives intact from strategy deck to final broadcast
-                  master.
+                  Strategists, directors, designers and broadcast engineers
+                  under one roof in Kampala, so the idea survives from brief to
+                  broadcast.
                 </p>
               </div>
             </div>
 
-            <div className="principles-grid reveal-on-scroll">
-              <article className="principle-card">
-                <div>
-                  <span
-                    className="eyebrow"
-                    style={{
-                      color: 'var(--brand-red)',
-                      marginBottom: '0.45rem',
-                    }}
-                  >
-                    01 / STRATEGY
-                  </span>
-                  <h3 className="h4 ink" style={{ marginBottom: '0.5rem' }}>
-                    Strategy before execution
-                  </h3>
-                  <p className="body-sm">
-                    Every campaign, screenplay, and stage begins with a clear
-                    commercial objective and audience truth.
-                  </p>
-                </div>
-                <div className="principle-card__photo">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/images/ucc/0R7A8991.jpg"
-                    alt="UCC Data Protection Conference panel"
-                    loading="lazy"
-                  />
-                </div>
-              </article>
+            <div className="ab-photo reveal-on-scroll">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/ftb/6F1A1300.jpg"
+                alt="Trust Empowerment Programme plenary session"
+                loading="lazy"
+              />
+            </div>
 
-              <article className="principle-card principle-card--tinted">
-                <div
-                  className="principle-card__photo"
-                  style={{ marginTop: 0, marginBottom: '1.75rem' }}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/images/ftb/6F1A1300.jpg"
-                    alt="Trust Empowerment Programme plenary session"
-                    loading="lazy"
-                  />
-                </div>
-                <div>
-                  <span
-                    className="eyebrow"
-                    style={{
-                      color: 'var(--brand-red)',
-                      marginBottom: '0.45rem',
-                    }}
-                  >
-                    02 / CRAFT
-                  </span>
-                  <h3 className="h4 ink" style={{ marginBottom: '0.5rem' }}>
-                    Built to be remembered
-                  </h3>
-                  <p className="body-sm">
-                    From 50+ district national documentaries with Penda to
-                    flagship summits for UCC and the Ministry of ICT, we execute
-                    at broadcast standard.
-                  </p>
-                </div>
-              </article>
-
-              <article className="principle-card">
-                <div>
-                  <span
-                    className="eyebrow"
-                    style={{
-                      color: 'var(--brand-red)',
-                      marginBottom: '0.45rem',
-                    }}
-                  >
-                    03 / PRODUCTION
-                  </span>
-                  <h3 className="h4 ink" style={{ marginBottom: '0.5rem' }}>
-                    In-house from brief to screen
-                  </h3>
-                  <p className="body-sm">
-                    Senior directors and technical producers run your production
-                    directly—on schedule and on budget.
-                  </p>
-                </div>
-                <div className="principle-card__photo">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/images/ucc/0R7A9084.jpg"
-                    alt="Stratco multi-camera broadcast execution"
-                    loading="lazy"
-                  />
-                </div>
-              </article>
+            <div className="ab-principles reveal-on-scroll">
+              {[
+                [
+                  '01',
+                  'Strategy first',
+                  'Every brief starts with a clear objective and an audience truth.',
+                ],
+                [
+                  '02',
+                  'Made to be remembered',
+                  'Broadcast-standard work, from national documentaries to flagship summits.',
+                ],
+                [
+                  '03',
+                  'In-house, brief to screen',
+                  'Senior directors run your production directly, on time and on budget.',
+                ],
+              ].map(([num, title, line]) => (
+                <article key={num} className="ab-principle">
+                  <span className="ab-principle__num">{num}</span>
+                  <h3 className="ab-principle__title">{title}</h3>
+                  <p className="ab-principle__line">{line}</p>
+                </article>
+              ))}
             </div>
           </div>
         </section>
@@ -853,64 +707,38 @@ export default function StratcoExperience() {
             </div>
 
             <div className="u-grid ct-layout reveal-on-scroll">
-              {/* Left: Clean Interactive Studio Desk */}
+              {/* Left: direct contact, plain text */}
               <div className="ct-desk">
-                <div className="ct-desk__status">
-                  <span className="navbar__clock-dot" />
-                  <span>Kampala · {klaTime} EAT · Production Desk</span>
+                <div className="ct-desk__email-row">
+                  <a href="mailto:info@stratco.agency" className="ct-desk__email">
+                    info@stratco.agency
+                  </a>
+                  <button
+                    type="button"
+                    className="ct-text-btn"
+                    onClick={handleCopyStudioEmail}
+                  >
+                    {emailCopied ? 'Copied' : 'Copy'}
+                  </button>
                 </div>
 
-                <div className="ct-desk__card">
-                  <span className="ct-desk__label">DIRECT EMAIL</span>
-                  <div className="ct-desk__email-row">
-                    <a
-                      href="mailto:info@stratco.agency"
-                      className="ct-desk__email"
-                    >
-                      info@stratco.agency
-                    </a>
-                    <button
-                      type="button"
-                      className={`ct-copy-btn ${
-                        emailCopied ? 'is-copied' : ''
-                      }`}
-                      onClick={handleCopyStudioEmail}
-                    >
-                      {emailCopied ? 'Copied ✓' : 'Copy'}
-                    </button>
-                  </div>
+                <div className="ct-desk__phones">
+                  <a href="tel:+256772833500">+256 772 833500</a>
+                  <a href="tel:+256772700708">+256 772 700708</a>
                 </div>
 
-                <div className="ct-desk__block">
-                  <span className="ct-desk__label">DIRECT LINES</span>
-                  <div className="ct-desk__phones">
-                    <a href="tel:+256772833500">+256 772 833500</a>
-                    <a href="tel:+256772700708">+256 772 700708</a>
-                  </div>
-                </div>
-
-                <div className="ct-desk__block">
-                  <span className="ct-desk__label">STUDIO HEADQUARTERS</span>
-                  <p className="ct-desk__address">
-                    Stratco Limited
-                    <br />
-                    Kisakye Complex, Office 301, Bugolobi
-                    <br />
-                    P.O. Box 144568, Kampala, Uganda
-                  </p>
-                </div>
+                <p className="ct-desk__address">
+                  Kisakye Complex, Bugolobi, Kampala
+                  <br />
+                  {klaTime} EAT
+                </p>
               </div>
 
-              {/* Right: Clean Interactive Brief Composer */}
-              <div className="ct-composer">
-                {/* Step 01: Segmented Discipline Pills */}
-                <div className="ct-step">
-                  <div className="ct-step__head">
-                    <span className="ct-step__num">01</span>
-                    <span className="ct-step__title">Select discipline</span>
-                  </div>
-
-                  <div className="ct-seg-tabs" role="tablist">
+              {/* Right: brief form */}
+              <form className="ct-form" onSubmit={handleSubmit}>
+                <fieldset className="ct-group">
+                  <legend className="ct-group__label">Discipline</legend>
+                  <div className="ct-tabs" role="tablist">
                     {(
                       [
                         ['live', 'Live & Broadcast'],
@@ -924,7 +752,7 @@ export default function StratcoExperience() {
                         type="button"
                         role="tab"
                         aria-selected={formIntent === key}
-                        className={`ct-seg-btn ${
+                        className={`ct-tab ${
                           formIntent === key ? 'is-active' : ''
                         }`}
                         onClick={() => handleIntentChange(key)}
@@ -933,74 +761,59 @@ export default function StratcoExperience() {
                       </button>
                     ))}
                   </div>
-                </div>
+                </fieldset>
 
-                {/* Step 02: Clean Interactive Deliverable Pills */}
-                <div className="ct-step">
-                  <div className="ct-step__head">
-                    <span className="ct-step__num">02</span>
-                    <span className="ct-step__title">Scope & deliverables</span>
-                    <span className="ct-step__meta">
-                      {selectedScopes.length} selected
-                    </span>
-                  </div>
-
-                  <div className="ct-pills">
-                    {SCOPE_OPTIONS[formIntent].map((chip) => {
+                <fieldset className="ct-group">
+                  <legend className="ct-group__label">Scope</legend>
+                  <div className="ct-chips">
+                    {SCOPE_OPTIONS[formIntent].slice(0, 4).map((chip) => {
                       const active = selectedScopes.includes(chip);
                       return (
                         <button
                           key={chip}
                           type="button"
-                          className={`ct-pill ${active ? 'is-active' : ''}`}
+                          aria-pressed={active}
+                          className={`ct-chip ${active ? 'is-active' : ''}`}
                           onClick={() => toggleScopeChip(chip)}
                         >
-                          <span className="ct-pill__dot" />
-                          <span>{chip}</span>
+                          {chip}
                         </button>
                       );
                     })}
                   </div>
-                </div>
+                </fieldset>
 
-                {/* Step 03: Target Timeline Quick Pills */}
-                <div className="ct-step">
-                  <div className="ct-step__head">
-                    <span className="ct-step__num">03</span>
-                    <span className="ct-step__title">Target timeline</span>
-                  </div>
-
-                  <div className="ct-pills">
+                <fieldset className="ct-group">
+                  <legend className="ct-group__label">Timeline</legend>
+                  <div className="ct-chips">
                     {TIMELINE_PRESETS.map((preset) => {
                       const active = timeline === preset;
                       return (
                         <button
                           key={preset}
                           type="button"
-                          className={`ct-pill ct-pill--compact ${
-                            active ? 'is-active' : ''
-                          }`}
+                          aria-pressed={active}
+                          className={`ct-chip ${active ? 'is-active' : ''}`}
                           onClick={() =>
                             setTimeline((prev) =>
                               prev === preset ? '' : preset
                             )
                           }
                         >
-                          <span>{preset}</span>
+                          {preset}
                         </button>
                       );
                     })}
                   </div>
-                </div>
+                </fieldset>
 
-                {/* Step 04: Clean Contact & Brief Fields */}
-                <form className="ct-form" onSubmit={handleSubmit}>
+                <div className="ct-fields">
                   <div className="ct-field">
-                    <label htmlFor="name">Your Name</label>
+                    <label htmlFor="name">Name</label>
                     <input
                       id="name"
                       type="text"
-                      placeholder="Full name"
+                      autoComplete="name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       required
@@ -1008,23 +821,24 @@ export default function StratcoExperience() {
                   </div>
 
                   <div className="ct-field">
-                    <label htmlFor="org">Organization</label>
+                    <label htmlFor="org">
+                      Organisation <span>(optional)</span>
+                    </label>
                     <input
                       id="org"
                       type="text"
-                      placeholder="Company, ministry, or institution"
+                      autoComplete="organization"
                       value={org}
                       onChange={(e) => setOrg(e.target.value)}
-                      required
                     />
                   </div>
 
                   <div className="ct-field ct-field--full">
-                    <label htmlFor="email">Work Email</label>
+                    <label htmlFor="email">Email</label>
                     <input
                       id="email"
                       type="email"
-                      placeholder="name@organization.com"
+                      autoComplete="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -1032,60 +846,45 @@ export default function StratcoExperience() {
                   </div>
 
                   <div className="ct-field ct-field--full">
-                    <label htmlFor="notes">Project Brief</label>
+                    <label htmlFor="notes">Brief</label>
                     <textarea
                       id="notes"
                       rows={3}
-                      placeholder="Share your campaign objective, target districts or venue, and key dates..."
+                      placeholder="Objective, location and key dates"
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                     />
                   </div>
+                </div>
 
-                  <div className="ct-form__actions">
-                    <button type="submit" className="btn-zj">
-                      <span className="btn-zj__label">Send project brief</span>
-                      <span className="btn-zj__tile">
-                        <ArrowNeIcon />
-                      </span>
-                    </button>
-
-                    <span className="ct-form__hint">
-                      Direct to Stratco Production Desk · Response within 24h
+                <div className="ct-form__actions">
+                  <button type="submit" className="btn-zj">
+                    <span className="btn-zj__label">Send brief</span>
+                    <span className="btn-zj__tile">
+                      <ArrowNeIcon />
                     </span>
-                  </div>
+                  </button>
+                  <span className="ct-form__hint">We reply within 24 hours.</span>
+                </div>
 
-                  {mailtoHref && (
-                    <div className="ct-dispatch-card">
-                      <div className="ct-dispatch-card__left">
-                        <span className="ct-dispatch-card__dot" />
-                        <div>
-                          <strong>Brief ready for Stratco</strong>
-                          <p>
-                            {getIntentLabel(formIntent)} ·{' '}
-                            {selectedScopes.length || 1} deliverable
-                            {selectedScopes.length === 1 ? '' : 's'}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="ct-dispatch-card__btns">
-                        <button
-                          type="button"
-                          className="ct-copy-btn"
-                          onClick={handleCopyBrief}
-                        >
-                          {briefCopied ? 'Brief copied ✓' : 'Copy brief'}
-                        </button>
-                        <a href={mailtoHref} className="ct-mail-btn">
-                          <span>Open Mail App</span>
-                          <ArrowNeIcon />
-                        </a>
-                      </div>
-                    </div>
-                  )}
-                </form>
-              </div>
+                {mailtoHref && (
+                  <p className="ct-dispatch" role="status">
+                    Brief ready. If your mail app didn’t open,{' '}
+                    <button
+                      type="button"
+                      className="ct-text-btn"
+                      onClick={handleCopyBrief}
+                    >
+                      {briefCopied ? 'copied' : 'copy it'}
+                    </button>{' '}
+                    or{' '}
+                    <a href={mailtoHref} className="ct-text-btn">
+                      open mail
+                    </a>
+                    .
+                  </p>
+                )}
+              </form>
             </div>
 
             <footer className="footer-bar">
