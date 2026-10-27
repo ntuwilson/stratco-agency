@@ -122,16 +122,15 @@ export const HERO_REEL_MODES: HeroReelMode[] = [
   {
     id: 'tvc',
     index: '02',
-    label: 'TVCs & Commercial Film',
+    label: 'Documentary & Commercial Film',
     headline:
-      'Cinema-grade commercial production directed from a strategic brief.',
-    meta: 'SCRIPT-TO-SCREEN · CINEMA PACKAGE · BROADCAST MASTER',
-    image:
-      'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1600&q=85',
+      'Digital Skilling for Women — 50+ District National Documentary Production.',
+    meta: 'CLIENT: PENDA · PARTNERS: UCC · UCUSAF · 2024 – 2026',
+    image: '/images/dlw/UCC00169.jpg',
     specs: [
-      '60s & 30s National TVCs',
-      'Brand Documentaries',
-      'In-House Color & Sound',
+      'Documentary Concept & Direction',
+      '50+ District Stories & Testimonials',
+      'In-House Edit, Color & Sound',
     ],
   },
   {
@@ -543,112 +542,6 @@ export const CASE_STUDIES: CaseStudy[] = [
     metrics: [
       { label: 'Client', value: 'Penda (for UCC & UCUSAF)' },
       { label: 'Coverage', value: '50+ Districts · 2024–2026' },
-    ],
-    intent: 'tvc',
-  },
-  {
-    id: 'national-tvc',
-    slug: 'national-tvc',
-    index: '04',
-    shortName: 'National TVC & 360° Campaign Rollout',
-    titleLines: ['National Television', '360° Campaign Rollout'],
-    tabTagline: 'Where boardroom strategy meets prime-time cinema',
-    sector: 'TELEVISION COMMERCIAL & CAMPAIGN',
-    badge: 'Film & TVC · Strategy & Campaigns',
-    filterCategories: ['All Work', 'Film & TVC', 'Strategy & Campaigns'],
-    status: 'FULL PROJECT',
-    title: 'National Television Commercial & 360° Integrated Campaign',
-    summary:
-      'End-to-end commercial strategy, screenplay development, multi-day cinema shoot, and synchronized national broadcast, radio, and outdoor billboard rollout.',
-    insight:
-      'A television commercial only moves market share when the screenplay is built on a sharp cultural insight. By uniting the strategy planners and the film director in the same room, every frame on air reinforces the same commercial message.',
-    client: 'National Consumer & Enterprise Campaign',
-    timeline: '2025 – 2026',
-    industry: 'Commercial Broadcast & OOH',
-    location: 'National Broadcast & OOH, Uganda',
-    scaleSpec: '60s & 30s Broadcast Masters · Multi-Day Cinema Unit · National OOH',
-    heroMetric: {
-      number: '360°',
-      sup: 'TVC',
-      gridLabel: '60s Master · Cinema Unit · OOH',
-    },
-    thesisTitle: 'Cinema Built on Strategy',
-    thesisParagraphs: [
-      'Every commercial production begins in the strategy room long before the camera truck arrives on location. We locked the audience tension, script beats, and visual language first so that principal photography, talent direction, and production design operated with zero wasted motion.',
-      'From the 60-second flagship broadcast spot to 30-second tactical cutdowns, highway billboards, and radio scripts, the entire campaign launched as one cohesive national statement.',
-    ],
-    execution: [
-      'Audience Research & Campaign Positioning',
-      'Commercial Screenplay & Storyboarding',
-      'Multi-Day Cinema Camera & Lighting Production',
-      'In-House Edit, Color Grading & Audio Mastering',
-      'National Billboard (OOH), Radio & Digital Cutdowns',
-    ],
-    credits: [
-      { role: 'Campaign Strategy', name: 'Stratco Strategy Desk' },
-      { role: 'Commercial Direction & DOP', name: 'Stratco Film Unit' },
-      { role: 'Post-Production & Mastering', name: 'Stratco Finishing Suite' },
-    ],
-    footerMeta: 'Cinema Production · Broadcast Master · National OOH',
-    image:
-      'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1600&q=85',
-    gallery: [
-      {
-        src: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=1600&q=85',
-        tag: '01 / PRINCIPAL PHOTOGRAPHY',
-        aspect: 'landscape',
-        caption:
-          'On-set cinema camera, lighting, and grip production executing the commercial screenplay.',
-      },
-      {
-        src: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1600&q=85',
-        tag: '02 / LOCATION DIRECTION',
-        aspect: 'portrait',
-        caption:
-          'Multi-location field cinematography and talent direction for 60s and 30s broadcast masters.',
-      },
-      {
-        src: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1600&q=85',
-        tag: '03 / COLOR GRADING & DI SUITE',
-        aspect: 'portrait',
-        caption:
-          'Senior colorist and finishing editor matching skin tones and commercial contrast across all broadcast deliverables.',
-      },
-      {
-        src: 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&w=1600&q=85',
-        tag: '04 / STUDIO LIGHTING & GRIP',
-        aspect: 'portrait',
-        caption:
-          'Precision studio lighting grid rigged for hero product and executive talent sequences.',
-      },
-      {
-        src: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?auto=format&fit=crop&w=1600&q=85',
-        tag: '05 / DIRECTOR MONITOR & STORYBOARD',
-        aspect: 'landscape',
-        caption:
-          'Live client and creative director review at video village ensuring every shot locks to the approved commercial treatment.',
-      },
-      {
-        src: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1600&q=85',
-        tag: '06 / KEY VISUAL & OOH STILLS UNIT',
-        aspect: 'portrait',
-        caption:
-          'Dedicated key-visual stills unit shooting matching high-resolution plates for national highway billboards.',
-      },
-    ],
-    challenge:
-      'Cut through cluttered national airtime with a campaign rooted in a sharp East African audience insight rather than generic corporate claims.',
-    solution:
-      'Stratco led the market research and strategic positioning before writing the commercial screenplay, casting, directing a multi-location cinema shoot, and rolling out synchronized outdoor, radio, and digital campaign assets.',
-    deliverables: [
-      'Campaign Strategy & Narrative Architecture',
-      '60s & 30s Broadcast Television Commercials (TVC)',
-      'National Billboard, Radio & Digital Cutdowns',
-      'In-House Edit, Color Grade & Broadcast Audio Mix',
-    ],
-    metrics: [
-      { label: 'Scope', value: 'Strategy to Broadcast' },
-      { label: 'Formats', value: 'TVC · OOH · Radio · Digital' },
     ],
     intent: 'tvc',
   },

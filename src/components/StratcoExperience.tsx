@@ -3,14 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  CASE_STUDIES,
   INTERACTIVE_SERVICES,
   PRODUCTION_STEPS,
   ProjectIntent,
   SCOPE_OPTIONS,
   SECTOR_TICKER,
-  WORK_FILTERS,
-  WorkFilterCategory,
 } from '@/data/stratcoData';
 import {
   StratcoMark,
@@ -18,19 +15,21 @@ import {
   ArrowNeIcon,
 } from '@/components/StratcoVectors';
 import ConcaveBowlHero from '@/components/ConcaveBowlHero';
+import WorkShowcase, { KononenkoIndexMode } from '@/components/WorkShowcase';
 
-export type KononenkoIndexMode = 'grid' | 'list' | 'gallery';
+export type { KononenkoIndexMode };
+
+const TIMELINE_PRESETS = [
+  'Immediate (< 1 Month)',
+  '1 – 3 Months',
+  'Q3 / Q4 Rollout',
+  'Multi-District / Ongoing',
+];
 
 export default function StratcoExperience() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [klaTime, setKlaTime] = useState('21:00');
-
-  // Kononenko Work Index State (`grid` | `list` | `gallery`) + Category Filter
-  const [workIndexMode, setWorkIndexMode] =
-    useState<KononenkoIndexMode>('grid');
-  const [activeFilter, setActiveFilter] =
-    useState<WorkFilterCategory>('All Work');
 
   // Interactive (1)-(4) Services Matrix State
   const [activeServiceIdx, setActiveServiceIdx] = useState(0);
@@ -48,9 +47,12 @@ export default function StratcoExperience() {
   const [name, setName] = useState('');
   const [org, setOrg] = useState('');
   const [email, setEmail] = useState('');
-  const [timeline, setTimeline] = useState('');
+  const [timeline, setTimeline] = useState('1 – 3 Months');
   const [notes, setNotes] = useState('');
   const [mailtoHref, setMailtoHref] = useState<string | null>(null);
+  const [preparedBriefText, setPreparedBriefText] = useState('');
+  const [emailCopied, setEmailCopied] = useState(false);
+  const [briefCopied, setBriefCopied] = useState(false);
 
   // Live Kampala Clock
   useEffect(() => {
@@ -99,10 +101,6 @@ export default function StratcoExperience() {
     };
   }, []);
 
-  const filteredCases = CASE_STUDIES.filter((cs) =>
-    cs.filterCategories.includes(activeFilter)
-  );
-
   const handleIntentChange = (intent: ProjectIntent) => {
     setFormIntent(intent);
     const defaults = SCOPE_OPTIONS[intent].slice(0, 2);
@@ -130,28 +128,51 @@ export default function StratcoExperience() {
     }
   };
 
+  const handleCopyStudioEmail = async () => {
+    try {
+      await navigator.clipboard.writeText('info@stratco.agency');
+      setEmailCopied(true);
+      window.setTimeout(() => setEmailCopied(false), 2400);
+    } catch {
+      // Fallback ignored if clipboard blocked
+    }
+  };
+
+  const handleCopyBrief = async () => {
+    if (!preparedBriefText) return;
+    try {
+      await navigator.clipboard.writeText(preparedBriefText);
+      setBriefCopied(true);
+      window.setTimeout(() => setBriefCopied(false), 2400);
+    } catch {
+      // Fallback ignored
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const typeLabel = getIntentLabel(formIntent);
-    const subject = encodeURIComponent(
-      `${typeLabel} Brief: ${org || name || 'New Project'}`
-    );
-    const body = encodeURIComponent(
-      [
-        `Primary Pillar: ${typeLabel}`,
-        `Selected Deliverables: ${
-          selectedScopes.join(', ') || 'General Inquiry'
-        }`,
-        `Name: ${name}`,
-        `Organization: ${org}`,
-        `Email: ${email}`,
-        ...(timeline ? [`Target Timeline / Launch: ${timeline}`] : []),
-        '',
-        'Project Notes:',
-        notes,
-      ].join('\n')
-    );
-    setMailtoHref(`mailto:info@stratco.agency?subject=${subject}&body=${body}`);
+    const rawSubject = `${typeLabel} Brief: ${org || name || 'New Project'}`;
+    const rawBody = [
+      `Primary Pillar: ${typeLabel}`,
+      `Selected Deliverables: ${
+        selectedScopes.join(', ') || 'General Inquiry'
+      }`,
+      `Name: ${name}`,
+      `Organization: ${org}`,
+      `Email: ${email}`,
+      ...(timeline ? [`Target Timeline / Launch: ${timeline}`] : []),
+      '',
+      'Project Notes:',
+      notes || '—',
+    ].join('\n');
+
+    const href = `mailto:info@stratco.agency?subject=${encodeURIComponent(
+      rawSubject
+    )}&body=${encodeURIComponent(rawBody)}`;
+    setPreparedBriefText(`To: info@stratco.agency\nSubject: ${rawSubject}\n\n${rawBody}`);
+    setMailtoHref(href);
+    window.location.href = href;
   };
 
   // Lock body scroll while full-screen mobile menu is open
@@ -333,256 +354,11 @@ export default function StratcoExperience() {
         <ConcaveBowlHero />
 
         {/* ==================================================================
-            02. SELECTED WORK — PURE KONONENKO INDEX
-            (Each Project Opens Its Own Dedicated Page at `/work/[slug]`)
+            02. SELECTED WORK — INTERACTIVE SHOWCASE & LIGHTBOX
             ================================================================== */}
         <section className="section-light section-pad-lg" id="work">
-          <div className="container">
-            <div className="kn-work-header reveal-on-scroll is-visible">
-              <div className="kn-work-header__left">
-                <span className="eyebrow" style={{ marginBottom: '0.5rem' }}>
-                  SELECTED WORK
-                </span>
-                <div className="kn-clean-filters" role="tablist">
-                  {WORK_FILTERS.map((cat) => {
-                    const isActive = activeFilter === cat;
-                    return (
-                      <button
-                        key={cat}
-                        type="button"
-                        role="tab"
-                        aria-selected={isActive}
-                        className={`kn-clean-filter-btn ${
-                          isActive ? 'is-active' : ''
-                        }`}
-                        onClick={() => setActiveFilter(cat)}
-                      >
-                        {cat}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Kononenko's 3-Mode View Switcher (`Grid` | `List` | `Gallery`) */}
-              <div
-                className="kn-ouf-switcher"
-                role="tablist"
-                aria-label="Work index view mode"
-              >
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={workIndexMode === 'grid'}
-                  className={`kn-qgi-btn ${
-                    workIndexMode === 'grid' ? 'is-active' : ''
-                  }`}
-                  onClick={() => setWorkIndexMode('grid')}
-                >
-                  <svg
-                    viewBox="0 0 15 10"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <rect width="7" height="3" fill="currentColor" />
-                    <rect x="8" y="7" width="7" height="3" fill="currentColor" />
-                    <rect y="5" width="7" height="3" fill="currentColor" />
-                    <rect x="8" y="2" width="7" height="3" fill="currentColor" />
-                  </svg>
-                  <span>Grid</span>
-                </button>
-
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={workIndexMode === 'list'}
-                  className={`kn-qgi-btn ${
-                    workIndexMode === 'list' ? 'is-active' : ''
-                  }`}
-                  onClick={() => setWorkIndexMode('list')}
-                >
-                  <svg
-                    viewBox="0 0 15 11"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <rect x="4" width="3" height="3" fill="currentColor" />
-                    <rect x="4" y="4" width="3" height="3" fill="currentColor" />
-                    <rect x="4" y="8" width="3" height="3" fill="currentColor" />
-                    <rect x="8" width="3" height="3" fill="currentColor" />
-                    <rect x="12" width="3" height="3" fill="currentColor" />
-                    <rect
-                      x="12"
-                      y="4"
-                      width="3"
-                      height="3"
-                      fill="currentColor"
-                    />
-                    <rect
-                      x="12"
-                      y="8"
-                      width="3"
-                      height="3"
-                      fill="currentColor"
-                    />
-                    <rect x="8" y="4" width="3" height="3" fill="currentColor" />
-                    <rect x="8" y="8" width="3" height="3" fill="currentColor" />
-                    <rect width="3" height="11" fill="currentColor" />
-                  </svg>
-                  <span>List</span>
-                </button>
-
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={workIndexMode === 'gallery'}
-                  className={`kn-qgi-btn ${
-                    workIndexMode === 'gallery' ? 'is-active' : ''
-                  }`}
-                  onClick={() => setWorkIndexMode('gallery')}
-                >
-                  <svg
-                    viewBox="0 0 16 11"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <rect width="6.15385" height="3" fill="currentColor" />
-                    <rect y="4" width="3.69231" height="3" fill="currentColor" />
-                    <rect y="8" width="6.15385" height="3" fill="currentColor" />
-                    <rect
-                      x="4.92383"
-                      y="4"
-                      width="6.15385"
-                      height="3"
-                      fill="currentColor"
-                    />
-                    <rect
-                      x="7.38477"
-                      y="8"
-                      width="3.69231"
-                      height="3"
-                      fill="currentColor"
-                    />
-                    <rect
-                      x="7.38477"
-                      width="8.61539"
-                      height="3"
-                      fill="currentColor"
-                    />
-                    <rect
-                      x="12.3086"
-                      y="8"
-                      width="3.69231"
-                      height="3"
-                      fill="currentColor"
-                    />
-                    <rect
-                      x="12.3086"
-                      y="4"
-                      width="3.69231"
-                      height="3"
-                      fill="currentColor"
-                    />
-                  </svg>
-                  <span>Gallery</span>
-                </button>
-              </div>
-            </div>
-
-            {/* MODE 1: KONONENKO STAGGERED ARCHITECTURAL GRID */}
-            {workIndexMode === 'grid' && (
-              <div className="kn-frl-grid reveal-on-scroll is-visible">
-                {filteredCases.map((cs, i) => (
-                  <Link
-                    key={cs.id}
-                    href={`/work/${cs.slug}`}
-                    className={`kn-qct-card kn-qct-pos-${(i % 4) + 1}`}
-                  >
-                    <div className="kn-piz-thumb">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={cs.image}
-                        alt={cs.title}
-                        loading={i < 2 ? 'eager' : 'lazy'}
-                      />
-                    </div>
-
-                    <div className="kn-iw-bar">
-                      <h3 className="kn-it-title">{cs.shortName}</h3>
-
-                      <div className="kn-qcm-right">
-                        <div className="kn-ic-swap">
-                          <p className="kn-dlx-metric">
-                            {cs.heroMetric.number} {cs.heroMetric.sup}
-                          </p>
-                          <p className="kn-jts-visit">Visit</p>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-
-            {/* MODE 2: KONONENKO HORIZONTAL CONTACT-SHEET LIST */}
-            {workIndexMode === 'list' && (
-              <div className="kn-srj-list reveal-on-scroll is-visible">
-                {filteredCases.map((cs) => (
-                  <Link
-                    key={cs.id}
-                    href={`/work/${cs.slug}`}
-                    className="kn-vjk-row"
-                  >
-                    <div className="kn-pdx-title-col">
-                      <h3 className="kn-zzg-heading">
-                        <span>{cs.titleLines[0]}</span>
-                        <span>{cs.titleLines[1]}</span>
-                      </h3>
-                    </div>
-
-                    <div className="kn-spm-filmstrip">
-                      {cs.gallery.map((frame, fIdx) => (
-                        <div key={fIdx} className="kn-kvl-thumb">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={frame.src}
-                            alt={frame.tag || cs.title}
-                            loading="lazy"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-
-            {/* MODE 3: KONONENKO ARCHIVAL GALLERY SHEET */}
-            {workIndexMode === 'gallery' && (
-              <div className="kn-studio-gallery reveal-on-scroll is-visible">
-                {filteredCases.flatMap((cs) =>
-                  cs.gallery.map((frame, fIdx) => (
-                    <Link
-                      key={`${cs.id}-${fIdx}`}
-                      href={`/work/${cs.slug}`}
-                      className="kn-gallery-sheet-item"
-                    >
-                      <div className="kn-gallery-sheet-item__media">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={frame.src}
-                          alt={frame.caption}
-                          loading="lazy"
-                        />
-                      </div>
-                      <div className="kn-gallery-sheet-item__cap">
-                        <strong>{cs.titleLines[0]}</strong>
-                      </div>
-                    </Link>
-                  ))
-                )}
-              </div>
-            )}
+          <div className="container reveal-on-scroll is-visible">
+            <WorkShowcase />
           </div>
         </section>
 
@@ -1076,184 +852,238 @@ export default function StratcoExperience() {
               </div>
             </div>
 
-            <div className="u-grid contact-layout reveal-on-scroll">
-              <div className="contact-details">
-                <div>
-                  <p
-                    className="body-md"
-                    style={{ color: '#FFFFFF', fontWeight: 500 }}
-                  >
+            <div className="u-grid ct-layout reveal-on-scroll">
+              {/* Left: Clean Interactive Studio Desk */}
+              <div className="ct-desk">
+                <div className="ct-desk__status">
+                  <span className="navbar__clock-dot" />
+                  <span>Kampala · {klaTime} EAT · Production Desk</span>
+                </div>
+
+                <div className="ct-desk__card">
+                  <span className="ct-desk__label">DIRECT EMAIL</span>
+                  <div className="ct-desk__email-row">
+                    <a
+                      href="mailto:info@stratco.agency"
+                      className="ct-desk__email"
+                    >
+                      info@stratco.agency
+                    </a>
+                    <button
+                      type="button"
+                      className={`ct-copy-btn ${
+                        emailCopied ? 'is-copied' : ''
+                      }`}
+                      onClick={handleCopyStudioEmail}
+                    >
+                      {emailCopied ? 'Copied ✓' : 'Copy'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="ct-desk__block">
+                  <span className="ct-desk__label">DIRECT LINES</span>
+                  <div className="ct-desk__phones">
+                    <a href="tel:+256772833500">+256 772 833500</a>
+                    <a href="tel:+256772700708">+256 772 700708</a>
+                  </div>
+                </div>
+
+                <div className="ct-desk__block">
+                  <span className="ct-desk__label">STUDIO HEADQUARTERS</span>
+                  <p className="ct-desk__address">
                     Stratco Limited
-                  </p>
-                  <p
-                    className="body-sm"
-                    style={{ color: 'var(--grey-250)', marginTop: '0.35rem' }}
-                  >
+                    <br />
                     Kisakye Complex, Office 301, Bugolobi
                     <br />
                     P.O. Box 144568, Kampala, Uganda
                   </p>
                 </div>
-
-                <div>
-                  <p className="body-sm" style={{ color: 'var(--grey-350)' }}>
-                    Direct Line
-                  </p>
-                  <p
-                    className="body-md"
-                    style={{ color: '#FFFFFF', marginTop: '0.2rem' }}
-                  >
-                    <a href="tel:+256772833500">+256 772 833500</a>
-                    <br />
-                    <a href="tel:+256772700708">+256 772 700708</a>
-                  </p>
-                </div>
-
-                <div>
-                  <p className="body-sm" style={{ color: 'var(--grey-350)' }}>
-                    Email
-                  </p>
-                  <p
-                    className="body-md"
-                    style={{ color: '#FFFFFF', marginTop: '0.2rem' }}
-                  >
-                    <a href="mailto:info@stratco.agency">info@stratco.agency</a>
-                  </p>
-                </div>
-
-                <div className="contact-clock-box">
-                  <span className="navbar__clock-dot" />
-                  <span>Kampala: {klaTime} EAT</span>
-                </div>
               </div>
 
-              <div className="contact-form-wrap">
-                <div className="intent-tabs" role="tablist">
-                  {(
-                    [
-                      ['live', 'Live & Broadcast'],
-                      ['tvc', 'TVCs & Film'],
-                      ['brand', 'Brand & Campaigns'],
-                      ['strategy', 'Strategy'],
-                    ] as [ProjectIntent, string][]
-                  ).map(([key, label]) => (
-                    <button
-                      key={key}
-                      type="button"
-                      className={`intent-tab ${
-                        formIntent === key ? 'is-active' : ''
-                      }`}
-                      onClick={() => handleIntentChange(key)}
-                    >
-                      {label}
-                    </button>
-                  ))}
+              {/* Right: Clean Interactive Brief Composer */}
+              <div className="ct-composer">
+                {/* Step 01: Segmented Discipline Pills */}
+                <div className="ct-step">
+                  <div className="ct-step__head">
+                    <span className="ct-step__num">01</span>
+                    <span className="ct-step__title">Select discipline</span>
+                  </div>
+
+                  <div className="ct-seg-tabs" role="tablist">
+                    {(
+                      [
+                        ['live', 'Live & Broadcast'],
+                        ['tvc', 'TVCs & Film'],
+                        ['brand', 'Brand & Campaigns'],
+                        ['strategy', 'Strategy'],
+                      ] as [ProjectIntent, string][]
+                    ).map(([key, label]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        role="tab"
+                        aria-selected={formIntent === key}
+                        className={`ct-seg-btn ${
+                          formIntent === key ? 'is-active' : ''
+                        }`}
+                        onClick={() => handleIntentChange(key)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                <div style={{ marginBottom: '2rem' }}>
-                  <div className="scope-chip-grid">
+                {/* Step 02: Clean Interactive Deliverable Pills */}
+                <div className="ct-step">
+                  <div className="ct-step__head">
+                    <span className="ct-step__num">02</span>
+                    <span className="ct-step__title">Scope & deliverables</span>
+                    <span className="ct-step__meta">
+                      {selectedScopes.length} selected
+                    </span>
+                  </div>
+
+                  <div className="ct-pills">
                     {SCOPE_OPTIONS[formIntent].map((chip) => {
                       const active = selectedScopes.includes(chip);
                       return (
                         <button
                           key={chip}
                           type="button"
-                          className={`scope-chip ${active ? 'is-active' : ''}`}
+                          className={`ct-pill ${active ? 'is-active' : ''}`}
                           onClick={() => toggleScopeChip(chip)}
                         >
+                          <span className="ct-pill__dot" />
                           <span>{chip}</span>
-                          <span>{active ? '✓' : '+'}</span>
                         </button>
                       );
                     })}
                   </div>
                 </div>
 
-                <form className="minimal-form" onSubmit={handleSubmit}>
-                  <div className="field">
+                {/* Step 03: Target Timeline Quick Pills */}
+                <div className="ct-step">
+                  <div className="ct-step__head">
+                    <span className="ct-step__num">03</span>
+                    <span className="ct-step__title">Target timeline</span>
+                  </div>
+
+                  <div className="ct-pills">
+                    {TIMELINE_PRESETS.map((preset) => {
+                      const active = timeline === preset;
+                      return (
+                        <button
+                          key={preset}
+                          type="button"
+                          className={`ct-pill ct-pill--compact ${
+                            active ? 'is-active' : ''
+                          }`}
+                          onClick={() =>
+                            setTimeline((prev) =>
+                              prev === preset ? '' : preset
+                            )
+                          }
+                        >
+                          <span>{preset}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Step 04: Clean Contact & Brief Fields */}
+                <form className="ct-form" onSubmit={handleSubmit}>
+                  <div className="ct-field">
                     <label htmlFor="name">Your Name</label>
                     <input
                       id="name"
                       type="text"
+                      placeholder="Full name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       required
                     />
                   </div>
 
-                  <div className="field">
+                  <div className="ct-field">
                     <label htmlFor="org">Organization</label>
                     <input
                       id="org"
                       type="text"
+                      placeholder="Company, ministry, or institution"
                       value={org}
                       onChange={(e) => setOrg(e.target.value)}
                       required
                     />
                   </div>
 
-                  <div className="field">
+                  <div className="ct-field ct-field--full">
                     <label htmlFor="email">Work Email</label>
                     <input
                       id="email"
                       type="email"
+                      placeholder="name@organization.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
                     />
                   </div>
 
-                  <div className="field">
-                    <label htmlFor="timeline">Timeline</label>
-                    <input
-                      id="timeline"
-                      type="text"
-                      placeholder="e.g. Q4 Campaign / Summit"
-                      value={timeline}
-                      onChange={(e) => setTimeline(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="field field--full">
+                  <div className="ct-field ct-field--full">
                     <label htmlFor="notes">Project Brief</label>
                     <textarea
                       id="notes"
                       rows={3}
+                      placeholder="Share your campaign objective, target districts or venue, and key dates..."
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                     />
                   </div>
 
-                  <div
-                    className="field field--full"
-                    style={{ marginTop: '0.75rem' }}
-                  >
-                    <div>
-                      <button type="submit" className="btn-zj">
-                        <span className="btn-zj__label">
-                          Send project brief
-                        </span>
-                        <span className="btn-zj__tile">
-                          <ArrowNeIcon />
-                        </span>
-                      </button>
-                    </div>
+                  <div className="ct-form__actions">
+                    <button type="submit" className="btn-zj">
+                      <span className="btn-zj__label">Send project brief</span>
+                      <span className="btn-zj__tile">
+                        <ArrowNeIcon />
+                      </span>
+                    </button>
 
-                    {mailtoHref && (
-                      <p className="body-sm" style={{ marginTop: '1rem' }}>
-                        <a
-                          href={mailtoHref}
-                          style={{
-                            color: '#FFFFFF',
-                            textDecoration: 'underline',
-                          }}
-                        >
-                          Open prepared brief in your email client
-                          (info@stratco.agency) ↗
-                        </a>
-                      </p>
-                    )}
+                    <span className="ct-form__hint">
+                      Direct to Stratco Production Desk · Response within 24h
+                    </span>
                   </div>
+
+                  {mailtoHref && (
+                    <div className="ct-dispatch-card">
+                      <div className="ct-dispatch-card__left">
+                        <span className="ct-dispatch-card__dot" />
+                        <div>
+                          <strong>Brief ready for Stratco</strong>
+                          <p>
+                            {getIntentLabel(formIntent)} ·{' '}
+                            {selectedScopes.length || 1} deliverable
+                            {selectedScopes.length === 1 ? '' : 's'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="ct-dispatch-card__btns">
+                        <button
+                          type="button"
+                          className="ct-copy-btn"
+                          onClick={handleCopyBrief}
+                        >
+                          {briefCopied ? 'Brief copied ✓' : 'Copy brief'}
+                        </button>
+                        <a href={mailtoHref} className="ct-mail-btn">
+                          <span>Open Mail App</span>
+                          <ArrowNeIcon />
+                        </a>
+                      </div>
+                    </div>
+                  )}
                 </form>
               </div>
             </div>

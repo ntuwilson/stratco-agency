@@ -2,19 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import {
-  CASE_STUDIES,
-  WORK_FILTERS,
-  WorkFilterCategory,
-} from '@/data/stratcoData';
 import { StratcoWordmark, ArrowNeIcon } from '@/components/StratcoVectors';
-import { KononenkoIndexMode } from '@/components/StratcoExperience';
+import WorkShowcase from '@/components/WorkShowcase';
 
 export default function WorkIndexPage() {
-  const [workIndexMode, setWorkIndexMode] =
-    useState<KononenkoIndexMode>('grid');
-  const [activeFilter, setActiveFilter] =
-    useState<WorkFilterCategory>('All Work');
   const [klaTime, setKlaTime] = useState('21:00');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -43,10 +34,6 @@ export default function WorkIndexPage() {
       document.body.style.overflow = '';
     };
   }, [mobileMenuOpen]);
-
-  const filteredCases = CASE_STUDIES.filter((cs) =>
-    cs.filterCategories.includes(activeFilter)
-  );
 
   return (
     <div>
@@ -196,223 +183,7 @@ export default function WorkIndexPage() {
         style={{ paddingTop: '9.5rem', minHeight: '100vh' }}
       >
         <div className="container" style={{ paddingBottom: '7rem' }}>
-          <div className="kn-work-header">
-            <div className="kn-work-header__left">
-              <span className="eyebrow" style={{ marginBottom: '0.5rem' }}>
-                SELECTED WORK
-              </span>
-              <div className="kn-clean-filters" role="tablist">
-                {WORK_FILTERS.map((cat) => {
-                  const isActive = activeFilter === cat;
-                  return (
-                    <button
-                      key={cat}
-                      type="button"
-                      role="tab"
-                      aria-selected={isActive}
-                      className={`kn-clean-filter-btn ${
-                        isActive ? 'is-active' : ''
-                      }`}
-                      onClick={() => setActiveFilter(cat)}
-                    >
-                      {cat}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div
-              className="kn-ouf-switcher"
-              role="tablist"
-              aria-label="Work index view mode"
-            >
-              <button
-                type="button"
-                role="tab"
-                aria-selected={workIndexMode === 'grid'}
-                className={`kn-qgi-btn ${
-                  workIndexMode === 'grid' ? 'is-active' : ''
-                }`}
-                onClick={() => setWorkIndexMode('grid')}
-              >
-                <svg
-                  viewBox="0 0 15 10"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <rect width="7" height="3" fill="currentColor" />
-                  <rect x="8" y="7" width="7" height="3" fill="currentColor" />
-                  <rect y="5" width="7" height="3" fill="currentColor" />
-                  <rect x="8" y="2" width="7" height="3" fill="currentColor" />
-                </svg>
-                <span>Grid</span>
-              </button>
-
-              <button
-                type="button"
-                role="tab"
-                aria-selected={workIndexMode === 'list'}
-                className={`kn-qgi-btn ${
-                  workIndexMode === 'list' ? 'is-active' : ''
-                }`}
-                onClick={() => setWorkIndexMode('list')}
-              >
-                <svg
-                  viewBox="0 0 15 11"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <rect x="4" width="3" height="3" fill="currentColor" />
-                  <rect x="4" y="4" width="3" height="3" fill="currentColor" />
-                  <rect x="4" y="8" width="3" height="3" fill="currentColor" />
-                  <rect x="8" width="3" height="3" fill="currentColor" />
-                  <rect x="12" width="3" height="3" fill="currentColor" />
-                  <rect x="12" y="4" width="3" height="3" fill="currentColor" />
-                  <rect x="12" y="8" width="3" height="3" fill="currentColor" />
-                  <rect x="8" y="4" width="3" height="3" fill="currentColor" />
-                  <rect x="8" y="8" width="3" height="3" fill="currentColor" />
-                  <rect width="3" height="11" fill="currentColor" />
-                </svg>
-                <span>List</span>
-              </button>
-
-              <button
-                type="button"
-                role="tab"
-                aria-selected={workIndexMode === 'gallery'}
-                className={`kn-qgi-btn ${
-                  workIndexMode === 'gallery' ? 'is-active' : ''
-                }`}
-                onClick={() => setWorkIndexMode('gallery')}
-              >
-                <svg
-                  viewBox="0 0 16 11"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <rect width="6.15385" height="3" fill="currentColor" />
-                  <rect y="4" width="3.69231" height="3" fill="currentColor" />
-                  <rect y="8" width="6.15385" height="3" fill="currentColor" />
-                  <rect
-                    x="4.92383"
-                    y="4"
-                    width="6.15385"
-                    height="3"
-                    fill="currentColor"
-                  />
-                  <rect
-                    x="7.38477"
-                    y="8"
-                    width="3.69231"
-                    height="3"
-                    fill="currentColor"
-                  />
-                  <rect
-                    x="7.38477"
-                    width="8.61539"
-                    height="3"
-                    fill="currentColor"
-                  />
-                  <rect
-                    x="12.3086"
-                    y="8"
-                    width="3.69231"
-                    height="3"
-                    fill="currentColor"
-                  />
-                  <rect
-                    x="12.3086"
-                    y="4"
-                    width="3.69231"
-                    height="3"
-                    fill="currentColor"
-                  />
-                </svg>
-                <span>Gallery</span>
-              </button>
-            </div>
-          </div>
-
-          {workIndexMode === 'grid' && (
-            <div className="kn-frl-grid">
-              {filteredCases.map((cs, i) => (
-                <Link
-                  key={cs.id}
-                  href={`/work/${cs.slug}`}
-                  className={`kn-qct-card kn-qct-pos-${(i % 4) + 1}`}
-                >
-                  <div className="kn-piz-thumb">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={cs.image} alt={cs.title} />
-                  </div>
-
-                  <div className="kn-iw-bar">
-                    <h2 className="kn-it-title">{cs.shortName}</h2>
-
-                    <div className="kn-qcm-right">
-                      <div className="kn-ic-swap">
-                        <p className="kn-dlx-metric">
-                          {cs.heroMetric.number} {cs.heroMetric.sup}
-                        </p>
-                        <p className="kn-jts-visit">Visit</p>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-
-          {workIndexMode === 'list' && (
-            <div className="kn-srj-list">
-              {filteredCases.map((cs) => (
-                <Link
-                  key={cs.id}
-                  href={`/work/${cs.slug}`}
-                  className="kn-vjk-row"
-                >
-                  <div className="kn-pdx-title-col">
-                    <h2 className="kn-zzg-heading">
-                      <span>{cs.titleLines[0]}</span>
-                      <span>{cs.titleLines[1]}</span>
-                    </h2>
-                  </div>
-
-                  <div className="kn-spm-filmstrip">
-                    {cs.gallery.map((frame, fIdx) => (
-                      <div key={fIdx} className="kn-kvl-thumb">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={frame.src} alt={frame.tag || cs.title} />
-                      </div>
-                    ))}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-
-          {workIndexMode === 'gallery' && (
-            <div className="kn-studio-gallery">
-              {filteredCases.flatMap((cs) =>
-                cs.gallery.map((frame, fIdx) => (
-                  <Link
-                    key={`${cs.id}-${fIdx}`}
-                    href={`/work/${cs.slug}`}
-                    className="kn-gallery-sheet-item"
-                  >
-                    <div className="kn-gallery-sheet-item__media">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={frame.src} alt={frame.caption} />
-                    </div>
-                    <div className="kn-gallery-sheet-item__cap">
-                      <strong>{cs.titleLines[0]}</strong>
-                    </div>
-                  </Link>
-                ))
-              )}
-            </div>
-          )}
+          <WorkShowcase />
         </div>
       </main>
     </div>
