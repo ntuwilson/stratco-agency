@@ -5,7 +5,7 @@
 export const GA_MEASUREMENT_ID = '';
 
 // Microsoft Clarity project ID, e.g. 'abcd1234ef' (Settings → Overview).
-export const CLARITY_ID = '';
+export const CLARITY_ID = 'z4wmb6wqof';
 
 type GtagParams = Record<string, string | number | boolean | undefined>;
 
