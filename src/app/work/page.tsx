@@ -183,7 +183,7 @@ export default function WorkIndexPage() {
         style={{ paddingTop: '9.5rem', minHeight: '100vh' }}
       >
         <div className="container" style={{ paddingBottom: '7rem' }}>
-          <WorkShowcase />
+          <WorkShowcase headingAs="h1" />
         </div>
       </main>
     </div>

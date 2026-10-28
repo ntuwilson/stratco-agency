@@ -16,6 +16,7 @@ import {
 } from '@/components/StratcoVectors';
 import ConcaveBowlHero from '@/components/ConcaveBowlHero';
 import WorkShowcase, { KononenkoIndexMode } from '@/components/WorkShowcase';
+import { trackEvent } from '@/config/analytics';
 
 export type { KononenkoIndexMode };
 
@@ -126,6 +127,7 @@ export default function StratcoExperience() {
   const handleCopyStudioEmail = async () => {
     try {
       await navigator.clipboard.writeText('info@stratco.agency');
+      trackEvent('copy_email', { location: 'contact' });
       setEmailCopied(true);
       window.setTimeout(() => setEmailCopied(false), 2400);
     } catch {
@@ -167,6 +169,11 @@ export default function StratcoExperience() {
     )}&body=${encodeURIComponent(rawBody)}`;
     setPreparedBriefText(`To: info@stratco.agency\nSubject: ${rawSubject}\n\n${rawBody}`);
     setMailtoHref(href);
+    trackEvent('generate_lead', {
+      method: 'brief_form',
+      discipline: formIntent,
+      timeline: timeline || 'unspecified',
+    });
     window.location.href = href;
   };
 

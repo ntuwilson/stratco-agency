@@ -9,6 +9,7 @@ import {
   WorkFilterCategory,
 } from '@/data/stratcoData';
 import { ArrowNeIcon } from '@/components/StratcoVectors';
+import { trackEvent } from '@/config/analytics';
 
 export type KononenkoIndexMode = 'grid' | 'list' | 'gallery';
 
@@ -71,7 +72,12 @@ function getCanvasPlacement(idx: number, portrait: boolean) {
   };
 }
 
-export default function WorkShowcase() {
+export default function WorkShowcase({
+  headingAs: Heading = 'h2',
+}: {
+  // h1 on the standalone /work page, h2 inside the home page
+  headingAs?: 'h1' | 'h2';
+} = {}) {
   const [workIndexMode, setWorkIndexMode] =
     useState<KononenkoIndexMode>('grid');
   const [activeFilter, setActiveFilter] =
@@ -286,12 +292,12 @@ export default function WorkShowcase() {
           <span className="eyebrow" style={{ marginBottom: '0.65rem' }}>
             OUR WORK
           </span>
-          <h2 className="display-2 wk-head__title">
+          <Heading className="display-2 wk-head__title">
             Selected Work
             <sup className="wk-head__count">
               {String(filteredCases.length).padStart(2, '0')}
             </sup>
-          </h2>
+          </Heading>
         </div>
 
         <div
@@ -337,6 +343,12 @@ export default function WorkShowcase() {
                 key={cs.id}
                 href={`/work/${cs.slug}`}
                 className={`wk-card wk-card--slot-${slot} wk-reveal`}
+                onClick={() =>
+                  trackEvent('select_content', {
+                    content_type: 'case_study',
+                    item_id: cs.slug,
+                  })
+                }
                 onMouseMove={(e) =>
                   handleCardMouseMove(e, cs.id, frames.length)
                 }
