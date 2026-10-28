@@ -38,3 +38,4 @@ next-env.d.ts
 # local work folders
 /_backup_*/
 /_screenshots/
+/out/
