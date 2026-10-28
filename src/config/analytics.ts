@@ -2,7 +2,7 @@
 // that tool switched off; the site loads nothing for it.
 
 // Google Analytics 4 measurement ID, e.g. 'G-XXXXXXXXXX' (Admin → Data streams).
-export const GA_MEASUREMENT_ID = '';
+export const GA_MEASUREMENT_ID = 'G-QBK1HKZMW3';
 
 // Microsoft Clarity project ID, e.g. 'abcd1234ef' (Settings → Overview).
 export const CLARITY_ID = 'z4wmb6wqof';
