@@ -153,11 +153,8 @@ void main() {
   vec2 edgeDist = min(vLocalUv, 1.0 - vLocalUv);
   float borderAa = smoothstep(0.0, 0.016, min(edgeDist.x, edgeDist.y));
 
-  float bowlExposure = mix(0.28, 0.86, smoothstep(0.05, 0.88, vDepthNorm));
-  vec3 col = tex * bowlExposure * uReady;
-
-  float rimLine = (1.0 - smoothstep(0.010, 0.022, min(edgeDist.x, edgeDist.y))) * borderAa;
-  col += vec3(1.0) * rimLine * 0.05 * vDepthNorm;
+  // White stage: photos render at full colour; the load-in fades up from white
+  vec3 col = mix(vec3(1.0), tex, uReady);
 
   gl_FragColor = vec4(col, borderAa * uCardAlpha);
 }
@@ -210,6 +207,11 @@ export default function ConcaveBowlHero() {
   const sectionRef = useRef<HTMLElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const monumentRef = useRef<HTMLDivElement | null>(null);
+  const dockRef = useRef<HTMLDivElement | null>(null);
+  // Headline/copy and bottom-link bounds in clip space (-1..1), kept clear of photos
+  const textZonesRef = useRef<
+    { left: number; right: number; top: number; bottom: number }[]
+  >([]);
 
   const [webglSupported, setWebglSupported] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
@@ -396,7 +398,7 @@ export default function ConcaveBowlHero() {
 
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    gl.clearColor(0.02, 0.02, 0.026, 1.0);
+    gl.clearColor(1.0, 1.0, 1.0, 1.0);
 
     const prefersReduced =
       typeof window !== 'undefined' &&
@@ -404,6 +406,56 @@ export default function ConcaveBowlHero() {
 
     const halfW = 8.8;
     const halfH = 6.0;
+
+    const measureTextZone = () => {
+      const s = section.getBoundingClientRect();
+      const w = Math.max(s.width, 1);
+      const h = Math.max(s.height, 1);
+      // padX/padY > 0 grows the clear box, < 0 shrinks it so photos can tuck under the text edges
+      const toClip = (
+        l: number,
+        r: number,
+        t: number,
+        b: number,
+        padX = 20,
+        padY = 20
+      ) => ({
+        left: ((l - padX - s.left) / w) * 2 - 1,
+        right: ((r + padX - s.left) / w) * 2 - 1,
+        top: 1 - ((t - padY - s.top) / h) * 2,
+        bottom: 1 - ((b + padY - s.top) / h) * 2,
+      });
+
+      const zones: { left: number; right: number; top: number; bottom: number }[] = [];
+
+      // Headline: only its core stays clear, so photos mix in under the outer letters.
+      // Copy line: fully clear.
+      Array.from(monumentRef.current?.children ?? []).forEach((child) => {
+        const c = child.getBoundingClientRect();
+        if (child.tagName === 'H1') {
+          zones.push(
+            toClip(
+              c.left,
+              c.right,
+              c.top,
+              c.bottom,
+              -c.width * 0.2,
+              -c.height * 0.1
+            )
+          );
+        } else {
+          zones.push(toClip(c.left, c.right, c.top, c.bottom));
+        }
+      });
+
+      // Each bottom action ("Our Work", "Get your project done") separately
+      Array.from(dockRef.current?.children ?? []).forEach((child) => {
+        const c = child.getBoundingClientRect();
+        zones.push(toClip(c.left, c.right, c.top, c.bottom));
+      });
+
+      textZonesRef.current = zones;
+    };
 
     let rafId = 0;
     let prevTime = performance.now();
@@ -447,25 +499,53 @@ export default function ConcaveBowlHero() {
       gl.clear(gl.COLOR_BUFFER_BIT);
 
       const aspect = canvas.width / Math.max(canvas.height, 1);
+      // Narrow screens clamp the horizontal projection, which makes photos huge;
+      // shrink them there so more of them fit and reach the headline edges
+      const plateScale = aspect < 0.85 ? 0.62 : aspect < 1.25 ? 0.82 : 1;
+      // ...and pull the bowl in horizontally so side photos come on-screen
+      const xSquash = aspect < 0.85 ? 0.5 : aspect < 1.25 ? 0.78 : 1;
+      measureTextZone();
       gl.uniform1f(uAspectLoc, aspect);
       gl.uniform1f(uReadyLoc, readyProgress);
 
       // Compute wrapped 3D bowl positions & sort back-to-front (deepest center first, closest rim last)
       const drawList = BOWL_PLATES.map((plate) => {
-        const wx = wrapCoord(plate.baseX + smoothPanRef.current[0], halfW);
+        const wrappedX = wrapCoord(plate.baseX + smoothPanRef.current[0], halfW);
+        const wx = wrappedX * xSquash;
         const wy = wrapCoord(plate.baseY + smoothPanRef.current[1], halfH);
         const r2 = wx * wx + wy * wy;
 
         // Smooth fade near wrap boundary so plates never pop
-        const alphaX = 1 - smoothstepJs(halfW * 0.78, halfW * 0.98, Math.abs(wx));
+        const alphaX =
+          1 - smoothstepJs(halfW * 0.78, halfW * 0.98, Math.abs(wrappedX));
         const alphaY = 1 - smoothstepJs(halfH * 0.78, halfH * 0.98, Math.abs(wy));
+
+        // Keep the headline + copy clear: project the plate the same way the
+        // vertex shader does and fade it out as it drifts into the text box
+        let clearAlpha = 1;
+        const pull = 1 / (1 + r2 * 0.006);
+        const depth = 10.8 - Math.min(r2 * 0.14, 4.6);
+        const sx = 1.85 / Math.max(aspect, 0.55) / depth;
+        const sy = 1.85 / depth;
+        const cx = wx * pull * sx;
+        const cy = wy * pull * sy;
+        const hw = plate.width * plateScale * 0.5 * sx;
+        const hh = plate.height * plateScale * 0.5 * sy;
+        textZonesRef.current.forEach((zone) => {
+          const overlapX =
+            Math.min(cx + hw, zone.right) - Math.max(cx - hw, zone.left);
+          const overlapY =
+            Math.min(cy + hh, zone.top) - Math.max(cy - hh, zone.bottom);
+          clearAlpha *=
+            1 - smoothstepJs(-0.04, 0.02, Math.min(overlapX, overlapY));
+        });
 
         return {
           plate,
           wx,
           wy,
           r2,
-          alpha: alphaX * alphaY,
+          alpha: alphaX * alphaY * clearAlpha,
         };
       }).sort((a, b) => a.r2 - b.r2);
 
@@ -477,7 +557,11 @@ export default function ConcaveBowlHero() {
         const rowIdx = Math.floor(item.plate.photoIdx / 4);
 
         gl.uniform2f(uCardCenterLoc, item.wx, item.wy);
-        gl.uniform2f(uCardSizeLoc, item.plate.width, item.plate.height);
+        gl.uniform2f(
+          uCardSizeLoc,
+          item.plate.width * plateScale,
+          item.plate.height * plateScale
+        );
         gl.uniform2f(uAtlasSlotLoc, colIdx, rowIdx);
         gl.uniform1f(
           uCardAspectLoc,
@@ -559,7 +643,7 @@ export default function ConcaveBowlHero() {
   return (
     <section
       ref={sectionRef}
-      className={`hero-bowl section-dark ${isDragging ? 'is-dragging' : ''}`}
+      className={`hero-bowl section-light ${isDragging ? 'is-dragging' : ''}`}
       onPointerMove={handlePointerMove}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
@@ -617,7 +701,7 @@ export default function ConcaveBowlHero() {
         {/* ==================================================================
             CLEAN BOTTOM LINE: ONLY "Our Work" & "Get your project done"
             ================================================================== */}
-        <div className="hero-bowl__dock">
+        <div ref={dockRef} className="hero-bowl__dock">
           <a href="#work" className="kn-hero-scroll-link hero-bowl__work-link">
             <span>Our Work</span>
             <span aria-hidden="true">↓</span>

@@ -209,7 +209,7 @@ export default function StratcoExperience() {
           NAVBAR
           ==================================================================== */}
       <header
-        className={`navbar ${isScrolled ? 'is-scrolled' : ''} ${
+        className={`navbar navbar--light ${isScrolled ? 'is-scrolled' : ''} ${
           mobileMenuOpen ? 'is-menu-open' : ''
         }`}
       >

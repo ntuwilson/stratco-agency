@@ -334,6 +334,39 @@ ul, ol {
   color: var(--bg-white);
 }
 
+/* Home page: navbar sits over the white hero, so it starts dark-on-light.
+   The scrolled state and the open mobile menu keep their own styling. */
+.navbar--light:not(.is-scrolled):not(.is-menu-open) {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(14px);
+  border-bottom-color: var(--line-light);
+  color: var(--grey-950);
+}
+
+.navbar--light:not(.is-scrolled):not(.is-menu-open) .logo-text-fill {
+  fill: #141414;
+}
+
+.navbar--light:not(.is-scrolled):not(.is-menu-open) .navbar__clock {
+  border-color: var(--line-light);
+  color: var(--grey-950);
+}
+
+.navbar--light:not(.is-scrolled):not(.is-menu-open) .navbar__menu-btn {
+  border-color: var(--grey-250);
+  background-color: rgba(255, 255, 255, 0.7);
+  color: var(--grey-950);
+}
+
+.navbar--light:not(.is-scrolled):not(.is-menu-open) .btn-zj {
+  border-color: var(--grey-350);
+  color: var(--grey-950);
+}
+
+.navbar--light:not(.is-scrolled):not(.is-menu-open) .btn-zj__tile {
+  border-left-color: var(--grey-350);
+}
+
 .navbar.is-scrolled {
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(14px);
@@ -745,7 +778,7 @@ ul, ol {
   position: relative;
   width: 100%;
   min-height: 100svh;
-  background-color: #08080B;
+  background-color: var(--bg-white);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -776,7 +809,6 @@ ul, ol {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0.75rem;
-  opacity: 0.36;
   transform: perspective(700px) scale(1.08);
   pointer-events: none;
 }
@@ -784,36 +816,19 @@ ul, ol {
 .hero-bowl__fallback-cell {
   overflow: hidden;
   border-radius: 4px;
-  background: #111115;
+  background: var(--bg-stone);
 }
 
 .hero-bowl__fallback-cell img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: contrast(1.08) brightness(0.68);
 }
 
-/* Concave Radial Well & Vertical Rim Scrim */
+/* No overlay on the white stage: photos stay crisp, and the bowl itself
+   keeps them out of the headline area (see textZone in ConcaveBowlHero) */
 .hero-bowl__vignette {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  background:
-    radial-gradient(
-      ellipse 44% 40% at 50% 48%,
-      rgba(5, 5, 7, 0.58) 0%,
-      rgba(5, 5, 7, 0.08) 62%,
-      rgba(5, 5, 7, 0.28) 100%
-    ),
-    linear-gradient(
-      to bottom,
-      rgba(5, 5, 7, 0.68) 0%,
-      rgba(5, 5, 7, 0) 18%,
-      rgba(5, 5, 7, 0) 78%,
-      rgba(5, 5, 7, 0.88) 100%
-    );
+  display: none;
 }
 
 /* Foreground Container Inside the Bowl */
@@ -847,7 +862,7 @@ ul, ol {
 .hero-bowl__title {
   font-family: var(--font-display);
   font-size: clamp(3.35rem, 9.6vw, 10.6rem);
-  font-weight: 200;
+  font-weight: 300;
   line-height: 0.89;
   letter-spacing: -0.042em;
   display: flex;
@@ -862,39 +877,19 @@ ul, ol {
 }
 
 /* Clean geometric display typography — zero serif, zero drop shadow */
-.hero-bowl__line--mist {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.36) 0%,
-    rgba(255, 255, 255, 0.90) 50%,
-    rgba(255, 255, 255, 0.36) 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.hero-bowl__line--focal {
-  color: rgba(255, 255, 255, 0.96);
-  text-shadow: none;
-}
-
+/* Solid, crisp headline on the white stage */
+.hero-bowl__line--mist,
+.hero-bowl__line--focal,
 .hero-bowl__line--submerged {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.86) 0%,
-    rgba(255, 255, 255, 0.34) 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--grey-950);
+  text-shadow: none;
 }
 
 .hero-bowl__copy {
   max-width: 38rem;
   font-size: clamp(1.06rem, 1.25vw, 1.24rem);
   line-height: 1.56;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--grey-750);
   text-shadow: none;
 }
 
@@ -906,13 +901,35 @@ ul, ol {
   justify-content: space-between;
   gap: 1.25rem 2rem;
   padding-top: 1.35rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-top: 1px solid var(--line-light);
 }
 
-.hero-bowl__work-link {
+.hero-bowl .hero-bowl__work-link {
   font-size: 1.05rem;
   letter-spacing: 0.01em;
-  color: #FFFFFF;
+  color: var(--grey-950);
+  border-bottom-color: var(--grey-350);
+}
+
+.hero-bowl .hero-bowl__work-link:hover {
+  color: var(--grey-950);
+  border-bottom-color: var(--grey-950);
+}
+
+/* Primary action on white: solid black, keeps the red arrow tile */
+.hero-bowl .btn-zj {
+  background-color: var(--grey-950);
+  border-color: var(--grey-950);
+  color: var(--bg-white);
+}
+
+.hero-bowl .btn-zj:hover {
+  background-color: #000000;
+  border-color: #000000;
+}
+
+.hero-bowl .btn-zj__tile {
+  border-left-color: rgba(255, 255, 255, 0.14);
 }
 
 @media (max-width: 767px) {
@@ -3732,5 +3749,106 @@ ul, ol {
 @media (max-width: 640px) {
   .ct-fields {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ==========================================================================
+   MOBILE PASS — phone/tablet fixes only; desktop layouts untouched
+   ========================================================================== */
+
+/* Footer: links wrap instead of running off-screen */
+.footer-bar > div {
+  flex-wrap: wrap;
+}
+
+.footer-bar a {
+  white-space: nowrap;
+}
+
+/* Services image caption: number lines up with wrapped caption text */
+.sv-stage__caption-bar {
+  align-items: baseline;
+}
+
+@media (max-width: 900px) {
+  /* The desktop "Plan a call" button was still showing (a later .btn-zj rule
+     overrode the hide) and squeezed the logo; the menu sheet has its own CTA */
+  .navbar .navbar__cta-desktop {
+    display: none;
+  }
+
+  .navbar__brand {
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .footer-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+  }
+
+  .footer-bar > div:last-child {
+    gap: 0 1.5rem !important;
+  }
+}
+
+/* 44px tap targets on phones and any touch screen, without changing the look */
+@media (max-width: 640px), (pointer: coarse) {
+  .footer-bar > div:last-child a {
+    padding: 0.7rem 0;
+  }
+
+  .wk-mode-btn {
+    height: 2.75rem;
+  }
+
+  .ct-tab {
+    padding: 0.65rem 0;
+  }
+
+  .ct-chip {
+    padding: 0.7rem 0.95rem;
+  }
+
+  .wk-filters {
+    row-gap: 0;
+  }
+
+  .wk-filter {
+    padding: 0.6rem 0;
+  }
+
+  .hero-bowl .hero-bowl__work-link {
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+  }
+
+  .ap-step__link,
+  .ct-desk__email {
+    display: inline-block;
+    padding: 0.6rem 0;
+    background-origin: content-box;
+    background-clip: content-box;
+  }
+
+  .ct-desk__phones {
+    gap: 0;
+  }
+
+  .ct-desk__phones a {
+    display: block;
+    padding: 0.55rem 0;
+  }
+
+  .ct-text-btn {
+    padding: 0.6rem 0.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .ct-desk {
+    gap: 1rem;
   }
 }
